@@ -1,3 +1,9 @@
+/*
+ * @Author: Firefly
+ * @Date: 2020-02-27 16:09:42
+ * @Descripttion: 
+ * @LastEditTime: 2020-02-27 22:24:04
+ */
 #include <assert.h>
 #include <strings.h>
 
@@ -62,7 +68,6 @@ bool solve_sudoku_min_arity_cache(int which_space)
       assert(board[cell] == 0);
       board[cell] = guess;
       occupied[cell][guess] = true;
-
       // remember changes
       int modified[NEIGHBOR];
       int nmodified = 0;

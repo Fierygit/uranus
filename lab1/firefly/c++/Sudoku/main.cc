@@ -1,3 +1,9 @@
+/*
+ * @Author: Firefly
+ * @Date: 2020-02-27 16:09:42
+ * @Descripttion: 
+ * @LastEditTime: 2020-02-27 22:26:13
+ */
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -30,6 +36,7 @@ int main(int argc, char* argv[])
     else if (argv[2][0] == 'd')
       solve = solve_sudoku_dancing_links;
   int64_t start = now();
+  
   while (fgets(puzzle, sizeof puzzle, fp) != NULL) {
     if (strlen(puzzle) >= N) {
       ++total;
