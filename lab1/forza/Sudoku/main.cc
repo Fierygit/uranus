@@ -48,16 +48,20 @@ cin>>ii;
 	getchar();
   int64_t start,end;
   double sec,sum;
+
 while(std::cin.getline(name, 20)) {
 if(name[0]=='q'&&name[1]=='u'&&name[2]=='i'&&name[3]=='t')
 	{break;}
 fp = fopen(name, "r");
 if(fp==NULL) 
 {  
-printf("File cannot open!fuck " );  
+printf("File cannot open!not good!" );  
 exit(0);  
 }
-start = now();
+
+start = now(); //计算输入一个文件后的开始时间
+
+
   while (fgets(puzzle, sizeof puzzle, fp) != NULL) {
     if (strlen(puzzle) >= N) {
       ++total;
@@ -75,26 +79,30 @@ start = now();
         printf("No: %s", puzzle);
       }
     }
-for(int i=0; i<N; i++) {
-if(i%9==0) {
+for(int i=0; i<N; i++) {  //该循环的作用是输入文件后在屏幕
+if(i%9==0) {		  //上打印出计算出来的结果，即一个9*9的数字矩阵
 printf("\n");
-}
+}       //如果只需要将结果输入到Result.txt中，不需要打印到屏幕上则将该循环删除
 printf("%d|",board[i]);
 }
 printf("\n");
-for(int i=0; i<N; i++) {
+
+
+for(int i=0; i<N; i++) {  //该循环的作用是将每个计算的结果输入到Result.txt中
 //fprintf(fp,"%d ", i);
 fprintf(fpa,"%d",board[i]);
 }
 fprintf(fpa,"\n");
   }
 
+
 fclose(fp);
 //cout<<ii++<<endl;
 
-	end=now();
+	end=now();  //计算输入一个文件并将所有结果计算出来后的结束时间
+
 	sec = (end-start)/1000000.0;
-	printf("total time: %f sec;\neach  time: %f sec;\ntotal solved:%d\n;", sec, sec/total, total_solved);
+	printf("total time: %f sec;\neach  time: %f sec;\ntotal solved:%d;\n", sec, sec/total, total_solved);
 	sum+=sec;
 	sum_total_solved+=total_solved;
 	total_solved = 0;
@@ -106,7 +114,7 @@ cout<<"enter the filename:         ----enter 'quit' to stop"<<endl;
 
 fclose(fpa);
 
-  printf("total time: %f sec;\neach  time: %f sec;\ntotal solved: %d\n;",
+  printf("total time: %f sec;\neach  time: %f sec;\ntotal solved: %d;\n",
 	 sum, sum/sum_total_solved, sum_total_solved);
 
   return 0;
