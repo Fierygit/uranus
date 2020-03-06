@@ -2,25 +2,36 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
+	"sync"
+	"time"
 )
 
 var sign = false
 
-var Sudoku = [9][9]int{
-	{0, 0, 0, 0, 0, 2, 0, 5, 0},
-	{0, 7, 8, 0, 0, 0, 3, 0, 0},
-	{0, 0, 0, 0, 0, 4, 0, 0, 0},
-	{5, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 1, 0, 0},
-	{0, 0, 0, 0, 3, 0, 7, 0, 8},
-	{2, 0, 0, 0, 0, 0, 0, 4, 0},
-	{0, 0, 0, 0, 0, 5, 0, 9, 0},
-	{0, 1, 0, 0, 7, 0, 0, 0, 0},
-}
+var Sudokus [][9][9]int
+var Sudoku [9][9]int
 
-func main() {
-	DFS(0)
-	Output(Sudoku)
+func getSudoku( ) [][9][9]int {
+	var sudo [][9][9]int
+	contentByte, err := ioutil.ReadFile("../test1000")
+	if err != nil {
+		panic(err)
+	}
+	content := string(contentByte)
+	lines := strings.Split(content, "\n")
+	var sudoArr [9][9]int
+
+	for _, line := range lines {
+		//fmt.Println(line)
+		for index, ch := range line {
+			//fmt.Println(ch)
+			sudoArr[index / 9][index % 9] = int(ch - 48)
+		}
+		sudo = append(sudo, sudoArr)
+	}
+	return sudo
 }
 
 func Output(sudoku [9][9]int) {
@@ -81,4 +92,31 @@ func DFS(n int) {
 			}
 		}
 	}
+}
+
+func main() {
+	var wg sync.WaitGroup
+	Sudokus = getSudoku()
+	cnt := 10
+	//chans := make([]chan bool, cnt)
+	for i := 0; i < cnt; i++ {
+		wg.Add(1)
+		sign = false
+		go func(ii int, Sudokus [][9][9]int) {
+			sudoku := Sudokus[ii]
+			start := time.Now()
+			DFS(0)
+			end := time.Now()
+			//chans[ii] <- true
+			fmt.Println(end.Sub(start))
+			Output(sudoku)
+			//defer wg.Done()
+		}(i, Sudokus)
+	}
+
+	//wg.Wait()
+	time.Sleep(time.Minute)
+	//for i := 0; i < cnt; i++ {
+	//	<- chans[i]
+	//}
 }

@@ -2,14 +2,48 @@
 // 队列 + 栈回溯
 // source url: https://blog.csdn.net/very_loong/article/details/77619885
 
-package Sudoku_go
+package main
 
 import (
 	"container/list"
 	"fmt"
 	"github.com/mohae/deepcopy"
+	"io/ioutil"
 	"os"
+	"strings"
+	"time"
 )
+
+func main() {
+	var sudoArr [9][9]int
+
+	contentByte, err := ioutil.ReadFile("test1000")
+	if err != nil {
+		panic(err)
+	}
+	content := string(contentByte)
+	lines := strings.Split(content, "\n")
+
+	// 从这里开始计时
+	start := time.Now()
+
+	for _, line := range lines {
+		//fmt.Println(line)
+		for index, ch := range line {
+			//fmt.Println(ch)
+			sudoArr[index / 9][index % 9] = int(ch - 48)
+		}
+		data := New(sudoArr)
+		data.Calc()
+		//fmt.Printf("id %d 完成，猜测了%d次\n", id, data.guess_times)
+		//for _, item := range data.sudokuList {
+		//	fmt.Println(item)
+		//}
+	}
+
+	end := time.Now()
+	fmt.Println("use time:", end.Sub(start).Seconds(), "seconds")
+}
 
 type Recoder struct {
 	point      [2]int
