@@ -2,14 +2,62 @@
 // 队列 + 栈回溯
 // source url: https://blog.csdn.net/very_loong/article/details/77619885
 
-package Sudoku_go
+package main
 
 import (
 	"container/list"
 	"fmt"
 	"github.com/mohae/deepcopy"
+	"io/ioutil"
 	"os"
+	"strings"
+	"sync"
+	"time"
 )
+
+var wg sync.WaitGroup //定义一个同步等待的组
+
+func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("go run sudoku.go <filename>")
+		return
+	}
+	contentByte, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+	content := string(contentByte)
+	lines := strings.Split(content, "\n")
+
+	// 从这里开始计时
+	start := time.Now()
+	for _, line := range lines {
+		if len(line) < 81 { // 避免空行
+			continue
+		} else {
+			line = line[:81] // 除去换行符
+		}
+		wg.Add(1)
+		// 协程
+		go func(line string) {
+			var sudoArr [9][9]int
+			for index, ch := range line {
+				sudoArr[index/9][index%9] = int(ch - 48)
+			}
+			data := New(sudoArr)
+			data.Calc()
+			//fmt.Printf("id %d 完成，猜测了%d次\n", id, data.guess_times)
+			//for _, item := range data.sudokuList {
+			//	fmt.Println(item)
+			//}
+			wg.Done()
+		}(line)
+	}
+	wg.Wait()
+
+	end := time.Now()
+	fmt.Println("use time:", end.Sub(start).Seconds(), "seconds")
+}
 
 type Recoder struct {
 	point      [2]int
