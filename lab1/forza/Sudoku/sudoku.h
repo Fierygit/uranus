@@ -11,9 +11,13 @@ extern int spaces[N];
 extern int nspaces;
 extern int (*chess)[COL];
 
+extern int len;//这是输入数独问题的个数
+extern int a[100000][81];//这是储存数独数据的二维数组
+
 void init_neighbors();
 void input(const char in[N]);
 void init_cache();
+int intputfile();
 
 bool available(int guess, int cell);
 
@@ -22,4 +26,6 @@ bool solve_sudoku_min_arity(int which_space);
 bool solve_sudoku_min_arity_cache(int which_space);
 bool solve_sudoku_dancing_links(int unused);
 bool solved();
+
+
 #endif
