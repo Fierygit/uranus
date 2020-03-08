@@ -150,8 +150,9 @@ int main(int argc,char* args[]) {
 		// solve((void*)nd);
         threadpool_add_job(pool, solve, (void*)nd);
 	}
-	ll end = now();
+	
     threadpool_destroy(pool);
+	ll end = now();
     double total = end - start;
 	// fclose(stdout);
 	// freopen("CON", "w", stdout);
