@@ -10,6 +10,7 @@ import (
 	"github.com/mohae/deepcopy"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,9 @@ import (
 var wg sync.WaitGroup //定义一个同步等待的组
 
 func main() {
+	fmt.Println("cpu cnt:", runtime.NumCPU())
+	fmt.Println("goroutine cnt:", runtime.NumGoroutine())
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	if len(os.Args) != 2 {
 		fmt.Println("go run sudoku.go <filename>")
 		return
@@ -53,6 +57,7 @@ func main() {
 			wg.Done()
 		}(line)
 	}
+	fmt.Println("goroutine cnt:", runtime.NumGoroutine())
 	wg.Wait()
 
 	end := time.Now()
