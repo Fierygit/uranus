@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-02-28 10:03:24
  * @Descripttion:
- * @LastEditTime: 2020-03-08 17:15:49
+ * @LastEditTime: 2020-03-28 20:20:21
  */
 
 #ifndef THREADPOOL_H
@@ -15,6 +15,7 @@
 
 using namespace std;
 
+extern int ** ans;
 //定义任务类型
 typedef void (*Task)(int);
 

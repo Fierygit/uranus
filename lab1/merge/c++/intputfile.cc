@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-03-08 13:52:30
  * @Descripttion:
- * @LastEditTime: 2020-03-08 15:01:01
+ * @LastEditTime: 2020-03-28 20:14:48
  */
 #include <assert.h>
 #include <stdint.h>
@@ -27,7 +27,7 @@ void intputfile() {
   FILE *fp;
   //	for(int i=0;i<=5;i++)
   //	b.push_back(a[i]);
-  string prefix = "./data/";
+  string prefix = "";
   string name;
   char nam;
   cout << "输入文件名，多个文件名用换行符分隔，输入 ctrl_ d (注意是dddddd) "
