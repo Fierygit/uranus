@@ -48,7 +48,7 @@ int main() {
   cout << "create " << 2 << "threads threadpool****************" << endl;
   pthread_mutex_init(&stop, NULL);
   pthread_mutex_lock(&stop);  // 确保所有的线程都被创建
-  Threadpool *pool = new Threadpool(5, len, work);
+  Threadpool *pool = new Threadpool(6, len, work);
 
   pthread_mutex_lock(&stop);
   //pause();  // stop the world
