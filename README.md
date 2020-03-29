@@ -31,3 +31,20 @@
 - 5     deal over!!! time: 0.503936
 
 - 10    deal over!!! time: 0.518267
+
+
+
+在四核3126内存的虚拟机运行下：
+- root                      0.222
+
+- 1     deal over!!! time: 1.091234
+
+- 2     deal over!!! time: 0.756421
+
+- 3     deal over!!! time: 0.567321
+
+- 4     deal over!!! time: 0.432156
+
+- 5     deal over!!! time: 0.545532
+
+- 10    deal over!!! time: 0.543453
