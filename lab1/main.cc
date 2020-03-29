@@ -50,13 +50,13 @@ int main() {
   cout << "create " << 2 << "threads threadpool****************" << endl;
   pthread_mutex_init(&stop, NULL);
   pthread_mutex_lock(&stop);  // 确保所有的线程都被创建
-  Threadpool *pool = new Threadpool(4, len, work);
+  Threadpool *pool = new Threadpool(3, len, work);
 
   pthread_mutex_lock(&stop);
-	for (int i = 0; i < len; i++) {
-         for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
-         cout << endl;
-       }
+//	for (int i = 0; i < len; i++) {
+//         for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
+//         cout << endl;
+//       }
 cout << "deal over!!! time: " << sec << endl;
   //pause();  // stop the world
 }

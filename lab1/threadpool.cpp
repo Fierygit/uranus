@@ -29,6 +29,7 @@ Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
   cout << "main pthread pid is " << ((unsigned)pthread_self() % 100) << endl;
   pthread_t pid[cntThread];
 
+  start_t = now();
   pthread_mutex_lock(&lock);  // 确保所有的线程都被创建
   for (int i = 0; i < cntThread; i++) {
     // 第一个  就是 控制这个线程 句柄上面的数组
@@ -45,7 +46,6 @@ Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
   curCount = 0;
   this->task = task;
   cout << "start deal !!!" << endl;
-  start_t = now();
   pthread_mutex_unlock(&lock);
   // 释放锁，其它线程就能拿到锁了， 开始执行！！！
 }
