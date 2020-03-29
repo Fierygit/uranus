@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-02-28 10:05:34
  * @Descripttion:
- * @LastEditTime: 2020-03-08 17:31:31
+ * @LastEditTime: 2020-03-28 20:21:53
  */
 #include "threadpool.h"
 #include <sys/time.h>
@@ -63,12 +63,20 @@ void* Threadpool::start(void* arg) {
     //加锁访问任务队列
     pthread_mutex_lock(&thread->lock);
     int solve_cnt = thread->curCount;
+
     if (solve_cnt == thread->maxCount) {
       end_t = now();
       double sec = (end_t - start_t) / 1000000.0;
       cout << "deal over!!! time: " << sec << endl;
-      break;               // 其它线程拿不到锁了，， 所以over
+
+      for (int i = 0; i < thread->maxCount; i++) {
+        for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
+        cout << endl;
+      }
+
+      break;  // 其它线程拿不到锁了，， 所以over
     }
+
     thread->curCount++;
     pthread_mutex_unlock(&thread->lock);
     //执行任务, 这里是可以有返回值的
