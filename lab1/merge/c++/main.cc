@@ -7,7 +7,7 @@
 
 #include "intputfile.h"
 #include "threadpool.h"
-
+#include "stdlib.h"
 #include <sys/time.h>
 #include <iostream>
 #include "sudoku.h"
@@ -44,7 +44,7 @@ int main() {
 
     cout << "create " << 100 << "threads threadpool****************" << endl;
 
-    Threadpool *pool = new Threadpool(100, len, work);
+    Threadpool *pool = new Threadpool(4, len, work);
 
   pause();
 }
