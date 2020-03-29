@@ -5,14 +5,15 @@
  * @LastEditTime: 2020-03-28 20:50:33
  */
 #include "threadpool.h"
+
 #include <sys/time.h>
 
-int64_t now() {
+int now() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv.tv_sec * 1000000 + tv.tv_usec;
 }
-static int64_t start_t, end_t;
+static int start_t, end_t;
 
 //构造函数,确定线程池的线程数
 Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
@@ -67,13 +68,10 @@ void* Threadpool::start(void* arg) {
     int solve_cnt = thread->curCount;
 
     if (solve_cnt == thread->maxCount) {
-      // for (int i = 0; i < thread->maxCount; i++) {
-      //   for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
-      //   cout << endl;
-      // }
-      end_t = now();
-      double sec = (end_t - start_t) / 1000000.0;
-      cout << "deal over!!! time: " << sec << endl;
+	end_t = now();
+      
+      sec = (end_t - start_t) / 1000000.0;
+      
       pthread_mutex_unlock(&stop);  // 确保所有的线程都被创建
       break;  // 其它线程拿不到锁了，， 所以over
     }

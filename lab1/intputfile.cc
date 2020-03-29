@@ -13,6 +13,7 @@
 #include <iostream>
 #include <vector>
 
+
 using namespace std;
 
 #include "intputfile.h"
@@ -66,6 +67,8 @@ void intputfile() {
   for (int i = 0; i < len; i++) {
     for (int j = 0; j < 81; j++) {
       data[i][j] = A[i][j] - 48;
+//	cout<<data[i][j];
     }
+//	cout<<endl;
   }
 }

@@ -8,14 +8,17 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
+#include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <iostream>
 #include <queue>
+#include <sys/time.h>
 
 using namespace std;
 
 extern int ** ans;
+extern double sec;
 extern pthread_mutex_t stop;
 //定义任务类型
 typedef void (*Task)(int);
