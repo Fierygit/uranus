@@ -2,15 +2,15 @@
  * @Author: Firefly
  * @Date: 2020-03-08 13:56:54
  * @Descripttion:
- * @LastEditTime: 2020-03-28 20:50:43
+ * @LastEditTime: 2020-03-30 21:59:54
  */
 
-#include "intputfile.h"
-#include "threadpool.h"
 #include <stdlib.h>
 #include <sys/time.h>
 #include <iostream>
+#include "intputfile.h"
 #include "sudoku.h"
+#include "threadpool.h"
 using namespace std;
 
 // 声明全局变量， 多个 cpp 共享
@@ -50,13 +50,13 @@ int main() {
   cout << "create " << 2 << "threads threadpool****************" << endl;
   pthread_mutex_init(&stop, NULL);
   pthread_mutex_lock(&stop);  // 确保所有的线程都被创建
-  Threadpool *pool = new Threadpool(3, len, work);
+  Threadpool *pool = new Threadpool(4, len, work);
 
   pthread_mutex_lock(&stop);
-//	for (int i = 0; i < len; i++) {
-//         for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
-//         cout << endl;
-//       }
-cout << "deal over!!! time: " << sec << endl;
-  //pause();  // stop the world
+  for (int i = 0; i < len; i++) {
+    for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
+    cout << endl;
+  }
+  cout << "deal over!!! time: " << sec << endl;
+  // pause();  // stop the world
 }

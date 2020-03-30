@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-02-28 10:05:34
  * @Descripttion:
- * @LastEditTime: 2020-03-28 20:50:33
+ * @LastEditTime: 2020-03-30 21:59:11
  */
 #include "threadpool.h"
 
@@ -20,8 +20,6 @@ Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
   //初始化条件变量与互斥量
   pthread_mutex_init(&lock, NULL);
   pthread_cond_init(&cond, NULL);
-
-
 
   this->maxCount = maxCount;
 
@@ -68,10 +66,10 @@ void* Threadpool::start(void* arg) {
     int solve_cnt = thread->curCount;
 
     if (solve_cnt == thread->maxCount) {
-	end_t = now();
-      
+      end_t = now();
+
       sec = (end_t - start_t) / 1000000.0;
-      
+
       pthread_mutex_unlock(&stop);  // 确保所有的线程都被创建
       break;  // 其它线程拿不到锁了，， 所以over
     }
