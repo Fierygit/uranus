@@ -17,6 +17,31 @@
 
 ## 数据对比评测 - from 吴嘉豪
 
+测试环境: win 10 平台 x86 Ubuntu-18.04 wsl1
+
+```
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              4
+On-line CPU(s) list: 0-3
+Thread(s) per core:  2
+Core(s) per socket:  2
+Socket(s):           1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               142
+Model name:          Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz
+Stepping:            9
+CPU MHz:             2701.000
+CPU max MHz:         2701.0000
+BogoMIPS:            5402.00
+Virtualization:      VT-x
+Hypervisor vendor:   Windows Subsystem for Linux
+Virtualization type: container
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave osxsave avx f16c rdrand lahf_lm abm 3dnowprefetch fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt intel_pt ibrs ibpb stibp ssbd
+```
+
 下表中, 数据量为数独问题的数量, 线程数为线程池中开启的线程数, 平均时间为以上述条件多次测试取平均值的执行时间(不包括数据IO)
 
 | 序号 | 数据量 | 线程数 | 平均时间 |
