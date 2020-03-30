@@ -4,4 +4,4 @@ sudoku_solve: main.o intputfile.o sudoku_dancing_links.o threadpool.o
 
 
 clean: 
-	rm *.o
+	rm *.o sudoku_solve
