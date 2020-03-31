@@ -50,7 +50,13 @@ int main() {
   cout << "create " << 2 << "threads threadpool****************" << endl;
   pthread_mutex_init(&stop, NULL);
   pthread_mutex_lock(&stop);  // 确保所有的线程都被创建
-  Threadpool *pool = new Threadpool(4, len, work);
+
+  int cntThread = 4;  // 设置线程数量
+    if (len < cntThread) {
+    cntThread = len;
+  }
+
+  Threadpool *pool = new Threadpool(cntThread, len, work);
 
   pthread_mutex_lock(&stop);
   for (int i = 0; i < len; i++) {
