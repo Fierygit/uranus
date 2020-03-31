@@ -36,18 +36,18 @@ void work(int cnt) {
   if (solve(tmp)) {
     for (int i = 0; i < 81; i++) ans[cnt][i] = tmp[i];
   } else {
-    cout << "no ans\n";
+    // cout << "no ans\n";
   }
 }
 
 int main() {
   intputfile();
-  cout << "file input over!!!\n\n" << endl;
+  // cout << "file input over!!!\n\n" << endl;
 
   ans = (int **)malloc(sizeof(int *) * len);
   for (int i = 0; i < len; i++) ans[i] = (int *)malloc(sizeof(int) * (81));
 
-  cout << "create " << 2 << "threads threadpool****************" << endl;
+  // cout << "create " << 2 << "threads threadpool****************" << endl;
   pthread_mutex_init(&stop, NULL);
   pthread_mutex_lock(&stop);  // 确保所有的线程都被创建
 
@@ -63,6 +63,6 @@ int main() {
     for (int j = 0; j < 81; j++) printf("%d", ans[i][j]);
     cout << endl;
   }
-  cout << "deal over!!! time: " << sec << endl;
+  // cout << "deal over!!! time: " << sec << endl;
   // pause();  // stop the world
 }

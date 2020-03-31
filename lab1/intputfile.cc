@@ -31,9 +31,9 @@ void intputfile() {
   string prefix = "";
   string name;
   char nam;
-  cout << "输入文件名，多个文件名用换行符分隔，输入 ctrl_ d (注意是dddddd) "
-          "结束输入："
-       << endl;
+  // cout << "输入文件名，多个文件名用换行符分隔，输入 ctrl_ d (注意是dddddd) "
+  //         "结束输入："
+  //      << endl;
   while (getline(cin, name)) {
     char *tmp_name = new char[40];
     name = prefix + name;
@@ -57,7 +57,7 @@ void intputfile() {
     fclose(fp);
   }
 
-  std::cout << "input over" << endl;
+  // std::cout << "input over" << endl;
 
   len = A.size();
  

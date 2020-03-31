@@ -24,7 +24,7 @@ Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
   this->maxCount = maxCount;
 
   //创建线程
-  cout << "main pthread pid is " << ((unsigned)pthread_self() % 100) << endl;
+  // cout << "main pthread pid is " << ((unsigned)pthread_self() % 100) << endl;
   pthread_t pid[cntThread];
 
   start_t = now();
@@ -36,14 +36,14 @@ Threadpool::Threadpool(size_t cntThread, size_t maxCount, Task task) {
     // 第四个 参数是线程的参数
     int ret = pthread_create(pid + i, NULL, start, this);
     while (ret != 0) {
-      cout << "create pthread error! " << ret << "\n";
+      // cout << "create pthread error! " << ret << "\n";
       int ret = pthread_create(pid + i, NULL, start, this);
     }
   }
 
   curCount = 0;
   this->task = task;
-  cout << "start deal !!!" << endl;
+  // cout << "start deal !!!" << endl;
   pthread_mutex_unlock(&lock);
   // 释放锁，其它线程就能拿到锁了， 开始执行！！！
 }
@@ -58,7 +58,7 @@ Threadpool::~Threadpool(void) {
 //线程入口
 void* Threadpool::start(void* arg) {
   Threadpool* thread = (Threadpool*)arg;
-  cout << "create thread " << ((unsigned)pthread_self() % 100) << endl;
+  // cout << "create thread " << ((unsigned)pthread_self() % 100) << endl;
 
   while (true) {
     //加锁访问任务队列
