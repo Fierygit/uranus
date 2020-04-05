@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-04-05 15:47:14
  * @Descripttion:
- * @LastEditTime: 2020-04-05 16:11:08
+ * @LastEditTime: 2020-04-05 16:13:37
  */
 #include <iostream>
 using namespace std;
@@ -11,7 +11,8 @@ using response = void (*)(context);
 // 线程池接口
 class thread_pool {
  public:
-  bool add_task(response, context);  // 队列满的时候返回false，否则放入队列
+  //注意处理response 应该是要static的， 创建线程的时调用的方法应该是 静态的， 不要属于 线程程池对象的
+  bool add_task(response, context);  // 队列满的时候返回false，否则放入队列  
   thread_pool(int);                  // 队列大小， 线程数
 };
 
