@@ -2,25 +2,40 @@
  * @Author: Firefly
  * @Date: 2020-04-05 15:47:14
  * @Descripttion:
- * @LastEditTime: 2020-04-05 16:13:37
+ * @LastEditTime: 2020-04-05 16:51:51
  */
+#include <time.h>
+#include <unistd.h>
+
 #include <iostream>
 using namespace std;
 
-using response = void (*)(context);
-// 线程池接口
-class thread_pool {
- public:
-  //注意处理response 应该是要static的， 创建线程的时调用的方法应该是 静态的， 不要属于 线程程池对象的
-  bool add_task(response, context);  // 队列满的时候返回false，否则放入队列  
-  thread_pool(int);                  // 队列大小， 线程数
-};
-
-struct context { // 
+struct context {  //
   int& fd;
   string& method;
   string& url;
 };
+
+//全局函数都可修改
+// using response = void (*)(context);
+typedef void (*response)(context);
+
+// 线程池接口-------------------------------------------
+class thread_pool {
+ public:
+  //注意处理response 应该是要static的， 创建线程的时调用的方法应该是 静态的，
+  //不要属于 线程程池对象的
+  bool add_task(response, context) { return true; }
+  // 队列满的时候返回false，否则放入队列
+  thread_pool(int a) {}  // 队列大小， 线程数
+};
+//-------------------------------------------------------------second fiveplus
+
+
+//---------------------------------- 参数要什么在 context 写, chenjie
+void static res(context c) { cout << c.url << endl; }
+//------------------------------------------------------------
+
 
 class http_server {
  public:
@@ -46,11 +61,18 @@ class http_server {
   int thread_num;
   thread_pool* pool;
   int fd;  // socket 句柄， 具体什么类型修改,
-
   // 接受函数
   context accept();
-  static response res;  // 陈杰实现
 };
+
+context http_server::accept() {
+  sleep(1);
+  string a = "method";
+  string b = "url";
+  int c = 1;
+  cout << "accept" << endl;
+  return context{c, a, b};
+}
 
 int main() {
   http_server* server = new http_server();
