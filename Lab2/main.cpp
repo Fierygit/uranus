@@ -6,9 +6,13 @@
  */
 #include <time.h>
 #include <unistd.h>
-
+#include <sys/socket.h>
+#include <sys/types.h>
+#include "string.h"
 #include <iostream>
 using namespace std;
+
+#define WEBHEAD_MAX 1000
 
 struct context {  //
   int& fd;
@@ -38,7 +42,7 @@ void static res(context c) { cout << c.url << endl; }
 class http_server {
  public:
   http_server() {
-    http_server(8888, 5);  //默认 8888 端口， 和 5个线程
+    http_server(9998, 1);  //默认 8888 端口， 和 5个线程
   }
   http_server(int port, int thread_num) {
     this->port = port;
@@ -60,11 +64,39 @@ class http_server {
   thread_pool* pool;
   int fd;  // socket 句柄， 具体什么类型修改,
   // 接受函数
+  int sock;
   context accept();
 };
 
 context http_server::accept() {
   sleep(1);
+
+//定义接收数据的变量
+char * buf = new char[WEBHEAD_MAX];
+//定义处理recv接收数据的变量
+char * recvBuf = new char[20];
+int nRet = 0;
+cout<<"start waiting..."<<endl;
+
+	nRet = recv(sock, recvBuf, 20, 0);
+	if (nRet > 0){
+		strncat(buf, recvBuf, nRet);
+		//判断如HTTP头中第一个字符是 P 那么就认为这是一个POST请求
+		//那么接下来判断最后4个字符是否为 \r\n\r\n, 如果是说明整个头未接收完成
+		if (buf[0] == 'P' && recvBuf[nRet - 1] == '\n' && recvBuf[nRet - 2] == '\r' && recvBuf[nRet - 3] == '\n' && recvBuf[nRet - 4] == '\r'){
+			cout<<recvBuf<<endl;
+		}
+		//下面是判断GET是否完整的接收
+		if (buf[0] == 'G' && recvBuf[nRet - 1] != '\n' && recvBuf[nRet - 2] != '\r' && recvBuf[nRet - 3] != '\n' && recvBuf[nRet - 4] != '\r'){
+			cout<<recvBuf<<endl;
+		}
+		
+	}
+
+delete[]recvBuf;
+
+
+
   string a = "method";
   string b = "url"; 
   int c = 1;
