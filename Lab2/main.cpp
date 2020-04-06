@@ -2,7 +2,7 @@
  * @Author: Firefly
  * @Date: 2020-04-05 15:47:14
  * @Descripttion:
- * @LastEditTime: 2020-04-05 16:51:51
+ * @LastEditTime: 2020-04-06 13:22:51
  */
 #include <time.h>
 #include <unistd.h>
@@ -30,12 +30,10 @@ class thread_pool {
   thread_pool(int a) {}  // 队列大小， 线程数
 };
 //-------------------------------------------------------------second fiveplus
-
-
+ 
 //---------------------------------- 参数要什么在 context 写, chenjie
 void static res(context c) { cout << c.url << endl; }
 //------------------------------------------------------------
-
 
 class http_server {
  public:
@@ -68,10 +66,10 @@ class http_server {
 context http_server::accept() {
   sleep(1);
   string a = "method";
-  string b = "url";
+  string b = "url"; 
   int c = 1;
   cout << "accept" << endl;
-  return context{c, a, b};
+  return context{c, a, b};//! error 不要引用局部指针
 }
 
 int main() {
