@@ -6,9 +6,13 @@
  */
 #include <time.h>
 #include <unistd.h>
-
+#include <sys/socket.h>
+#include <sys/types.h>
+#include "string.h"
 #include <iostream>
 using namespace std;
+
+#define WEBHEAD_MAX 1000
 
 struct context {  //
   int& fd;
@@ -38,7 +42,7 @@ void static res(context c) { cout << c.url << endl; }
 class http_server {
  public:
   http_server() {
-    http_server(8888, 5);  //默认 8888 端口， 和 5个线程
+    http_server(9998, 1);  //默认 8888 端口， 和 5个线程
   }
   http_server(int port, int thread_num) {
     this->port = port;
@@ -65,6 +69,7 @@ class http_server {
 
 context http_server::accept() {
   sleep(1);
+
   string a = "method";
   string b = "url"; 
   int c = 1;
