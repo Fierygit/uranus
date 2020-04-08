@@ -22,7 +22,7 @@ cout<<szLineBuf<<endl;
  char szHttpVersion2[BUFFER_SIZE] = {0};
  sscanf(szLineBuf,  "%[^ ]", szHttpVersion);
  sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
-  sscanf(szLineBuf, "HTTP/%[^ ]", szHttpVersion1);
+  sscanf(szLineBuf, "%*[^H]%*[^T]%*[^P]%*[^/]/%[^ ]", szHttpVersion2);
  cout<<"方法是:"<<endl<<szHttpVersion<<endl;
  cout<<"请求的url是:"<<endl<<szHttpVersion1<<endl;
  cout<<"HTTP版本号是:"<<endl<<szHttpVersion2<<endl;

@@ -30,56 +30,16 @@ std::stringstream ssHeader(strHeader.c_str());
 
 // 提取第一行内容
 ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
-cout<<szLineBuf<<endl;
 // 获取HTTP版本
-char szHttpVersion[BUFFER_SIZE] = {0};
-char szHttpVersion1[BUFFER_SIZE] = {0};
-sscanf(szLineBuf, "%s", szHttpVersion);
-    cout<<strlen(szHttpVersion)<<endl;
-    int i=strlen(szHttpVersion);
-    for(int j=strlen(szHttpVersion); szLineBuf[j]!='\n'; j++) {
-        szLineBuf[j]=szLineBuf[j-i];
-    }
-
-sscanf(szLineBuf, "%s", szHttpVersion1);
-cout<<"HTTP版本是:"<<szHttpVersion<<"到此为止..."<<endl;
-cout<<"HTTP版本是1:"<<szHttpVersion<<"1到此为止..."<<endl;
-// 获取状态码
-strtok(szLineBuf," ");
-int iStatusCode = atoi(strtok(NULL, " "));
-
-// 逐行提取余下的报文参数名值对
-std::string strParamName;
-std::string strParamValue;
-for (;;)
-{
-// 提取一行内容
-ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
-// 跳过参数名之前的无效字符
-// 有效起始地址
-char* start = szLineBuf + count;
-
-// 解析完毕
-if ( 0 == strlen(start) )
-{
-break;
-}
-// 查找冒号出现的位置
-char* p = strchr(start, ':');
-if ( p - start > 0 )
-{
-strParamName.assign(start, p - start);
-}
-else
-{
-// 解析出错
-return false;
-}
-
-// 跳过无效字符
-count = strspn(p, ": ");
-strParamValue.assign(p + count);
-}
+ char  szHttpVersion[BUFFER_SIZE] = {0};
+ char szHttpVersion1[BUFFER_SIZE] = {0};
+ char szHttpVersion2[BUFFER_SIZE] = {0};
+ sscanf(szLineBuf,  "%[^ ]", szHttpVersion);
+ sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
+  sscanf(szLineBuf, "%*[^H]%*[^T]%*[^P]%*[^/]/%[^ ]", szHttpVersion2);
+ cout<<"方法是:"<<endl<<szHttpVersion<<endl;
+ cout<<"请求的url是:"<<endl<<szHttpVersion1<<endl;
+ cout<<"HTTP版本号是:"<<endl<<szHttpVersion2<<endl;
 
 return true;
 }
@@ -165,9 +125,8 @@ void do_echoser(int conn) {
         for(int i=0; i<ret; i++) {
             cout<<recvbuf[i];
         }
-        cout<<endl<<endl;
 //      fputs(recvbuf, stdout);
-        HttpRespHeaderPrase(recvbuf);
+        HttpRespHeaderPrase(recvbuf);//使用这个函数读取方法和url
         write(conn, recvbuf, strlen(recvbuf));
 		close(conn);
 	
