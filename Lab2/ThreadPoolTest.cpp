@@ -37,6 +37,7 @@ int main() {
 
 	while (1) {
 		printf("there are still %d tasks need to process\n", threadPool.size());
+		// 等待队列结束
 		if (threadPool.size() == 0) {
 			threadPool.stop();
 			printf("Now I will exit from main\n");

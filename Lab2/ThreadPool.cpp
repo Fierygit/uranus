@@ -1,4 +1,5 @@
 #include "ThreadPool.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 namespace uranus {
 // 构造函数 - 设置线程数量
 ThreadPool::ThreadPool(int threadNum) {
-	isRunning_  = true;
+	isRunning_	= true;
 	threadsNum_ = threadNum;
 	createThreads();
 }
@@ -86,7 +87,7 @@ ThreadPool::Task ThreadPool::take() {
 }
 
 void* ThreadPool::threadFunc(void* arg) {
-	pthread_t tid	= pthread_self();
+	pthread_t tid	 = pthread_self();
 	ThreadPool* pool = static_cast<ThreadPool*>(arg);
 	while (pool->isRunning_) {
 		ThreadPool::Task task = pool->take();
