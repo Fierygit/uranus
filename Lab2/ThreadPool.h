@@ -4,6 +4,8 @@
 #include <deque>
 #include <functional>  // for std::function, std::bind
 
+#define ThreadNum 10
+
 // 每一个job都是一个function对象
 namespace uranus {
 class ThreadPool {
@@ -11,7 +13,7 @@ class ThreadPool {
 	// 一个任务是一个函数
 	typedef std::function<void()> Task;
 
-	ThreadPool(int threadNum = 10);
+	ThreadPool(int threadNum = ThreadNum);
 	~ThreadPool();
 
 	size_t addTask(const Task& task);
