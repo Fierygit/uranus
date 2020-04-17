@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/d/college3/cloud_computing/uranus/Lab2/epoll
+CMAKE_SOURCE_DIR = /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug
+CMAKE_BINARY_DIR = /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

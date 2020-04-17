@@ -2,9 +2,10 @@
 // Created by Firefly on 2020/4/17.
 //
 
-#include <zconf.h>
+//#include <zconf.h>
 #include "http_server.h"
 #include "debug_log.h"
+#include <unistd.h>
 
 http_server::http_server() {
     http_server(8888); // 默认 8888 端口

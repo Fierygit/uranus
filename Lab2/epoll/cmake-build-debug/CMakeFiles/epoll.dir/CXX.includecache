@@ -6,11 +6,11 @@
 
 #IncludeRegexTransform: 
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.cpp
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.cpp
 debug_log.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
 stdio.h
 -
 time.h
@@ -20,25 +20,23 @@ string.h
 stdarg.h
 -
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.cpp
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.cpp
 sys/epoll.h
 -
 handler.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.cpp
-zconf.h
--
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.cpp
 http_server.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.h
 debug_log.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
-
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.h
-bits/socket.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
+unistd.h
 -
+
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.h
 sys/socket.h
 -
 netinet/in.h
@@ -48,15 +46,15 @@ string
 fcntl.h
 -
 sys/epoll.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/sys/epoll.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/sys/epoll.h
 debug_log.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
 handler.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
 
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/main.cpp
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/main.cpp
 iostream
 -
 http_server.h
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.h
 
