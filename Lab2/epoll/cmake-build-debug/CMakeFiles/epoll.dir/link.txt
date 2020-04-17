@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/epoll.dir/main.cpp.o CMakeFiles/epoll.dir/http_server.cpp.o CMakeFiles/epoll.dir/handler.cpp.o CMakeFiles/epoll.dir/debug_log.cpp.o  -o epoll 

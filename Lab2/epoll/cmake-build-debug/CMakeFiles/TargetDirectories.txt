@@ -1,0 +1,3 @@
+/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir
+/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/edit_cache.dir
