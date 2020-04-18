@@ -29,6 +29,8 @@ handler.h
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
 
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.cpp
+iostream
+-
 zconf.h
 -
 http_server.h
@@ -37,15 +39,11 @@ debug_log.h
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
 
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.h
-bits/socket.h
--
-sys/socket.h
--
-netinet/in.h
--
 string
 -
-fcntl.h
+arpa/inet.h
+-
+sys/socket.h
 -
 sys/epoll.h
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/sys/epoll.h
@@ -53,6 +51,10 @@ debug_log.h
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
 handler.h
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
+arpa/inet.h
+-
+fcntl.h
+-
 
 /mnt/d/college3/cloud_computing/uranus/Lab2/epoll/main.cpp
 iostream
