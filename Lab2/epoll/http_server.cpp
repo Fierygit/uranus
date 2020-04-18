@@ -7,17 +7,15 @@
 #include "debug_log.h"
 #include <unistd.h>
 
-http_server::http_server() {
-    http_server(7777); // 默认 8888 端口
-}
+http_server::http_server() : http_server(7777) {}
 
 http_server::http_server(uint16_t server_port) : server_port(server_port) {
     init();
-    std::cout << this->epfd << " "  << std::endl;
+    //std::cout << this->epfd << " "  << std::endl;
 }
 
 http_server::~http_server() {
-    std::cout << "del" << std::endl;
+    std::cout << "destruct" << std::endl;
     close(serv_sock); //关闭socket
     close(epfd);     //关闭内核
 }
@@ -38,13 +36,13 @@ http_server::~http_server() {
 void http_server::start() {
 
     while (true) {
-        std::cout << this->epfd << std::endl;
+        //std::cout << this->epfd << std::endl;
         // epoll_events_count表示就绪事件的数目, 这里会循环等待， 直到有事件的到来, 本质也是阻塞 i/o
         int epoll_events_count = epoll_wait(epfd, events, epoll_size, -1);
         // 返回 -1 代表失败
         if (epoll_events_count < 0) {
             DEBUG_LOG("epoll failure");
-            std::cout << epfd << " "  << std::endl;
+            //std::cout << epfd << " "  << std::endl;
             break;
         }
 
@@ -128,7 +126,7 @@ void http_server::init_epoll() {
     /**
      *  设置为非阻塞 io
      */
-    //fcntl(epfd, F_SETFL, fcntl(epfd, F_GETFD, 0) | O_NONBLOCK);
+    fcntl(epfd, F_SETFL, fcntl(epfd, F_GETFD, 0) | O_NONBLOCK);
     DEBUG_LOG("epoll init over!!!");
 }
 
@@ -189,3 +187,4 @@ void http_server::init_socket() {
 //        exit(EXIT_FAILURE);
 //    }
 }
+

@@ -3,8 +3,9 @@
 
 
 int main() {
-    http_server server;
-    server.start();
+
+    auto *server = new http_server();
+    server->start();
     std::cout << "Hello, World!" << std::endl;
     return 0;
 }
