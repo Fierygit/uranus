@@ -1,4 +1,4 @@
-# Install script for directory: /mnt/d/college3/cloud_computing/uranus/Lab2/epoll
+# Install script for directory: /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

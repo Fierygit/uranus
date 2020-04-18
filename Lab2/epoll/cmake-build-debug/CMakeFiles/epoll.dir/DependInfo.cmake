@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.cpp" "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/debug_log.cpp.o"
-  "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.cpp" "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/handler.cpp.o"
-  "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.cpp" "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/http_server.cpp.o"
-  "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/main.cpp" "/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/main.cpp.o"
+  "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.cpp" "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/debug_log.cpp.o"
+  "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.cpp" "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/handler.cpp.o"
+  "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.cpp" "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/http_server.cpp.o"
+  "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/main.cpp" "/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/cmake-build-debug/CMakeFiles/epoll.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

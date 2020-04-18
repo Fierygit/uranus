@@ -1,9 +1,16 @@
 //
 // Created by Firefly on 2020/4/17.
 //
+<<<<<<< HEAD
 
 
 
+=======
+// 编译的时候提示 不使用 <bits/socket.h> 这个而使用 #include <sys/socket.h> 这个了
+//#include <bits/socket.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+>>>>>>> master
 #include <string>
 
 #include <arpa/inet.h>
