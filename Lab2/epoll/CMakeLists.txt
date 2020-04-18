@@ -6,5 +6,9 @@ add_compile_options(-std=c++11)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(epoll main.cpp http_server.cpp handler.cpp debug_log.cpp)
+add_executable(epoll main.cpp http_server.cpp handler.cpp debug_log.cpp request.cpp ThreadPool.cpp response.cpp)
 
+target_link_libraries(
+        ${PROJECT_NAME}
+        pthread
+)

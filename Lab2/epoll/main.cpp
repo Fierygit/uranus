@@ -3,11 +3,8 @@
 
 
 int main() {
-    http_server* server = new http_server(7777);
+    auto *server = new http_server();
     server->start();
-    std::cout << "shutdown!\n";
-//    http_server server;
-//    server.start();
-//    std::cout << "Hello, World!" << std::endl;
-//    return 0;
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
 }
