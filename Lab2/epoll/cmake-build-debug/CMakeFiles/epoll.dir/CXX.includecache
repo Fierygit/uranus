@@ -28,23 +28,10 @@ handler.h
 
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
 
-<<<<<<< HEAD
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.cpp
-iostream
--
-zconf.h
--
-=======
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.cpp
->>>>>>> master
 http_server.h
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.h
 debug_log.h
-<<<<<<< HEAD
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/debug_log.h
-
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/http_server.h
-=======
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
 unistd.h
 -
@@ -52,10 +39,9 @@ unistd.h
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/http_server.h
 sys/socket.h
 -
-netinet/in.h
--
->>>>>>> master
 string
+-
+iostream
 -
 arpa/inet.h
 -
@@ -66,15 +52,11 @@ sys/epoll.h
 debug_log.h
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/debug_log.h
 handler.h
-<<<<<<< HEAD
-/mnt/d/college3/cloud_computing/uranus/Lab2/epoll/handler.h
+/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
 arpa/inet.h
 -
 fcntl.h
 -
-=======
-/mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/handler.h
->>>>>>> master
 
 /mnt/e/virtualShare/gopath3/src/uranus/Lab2/epoll/main.cpp
 iostream

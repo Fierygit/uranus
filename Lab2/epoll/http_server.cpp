@@ -2,11 +2,6 @@
 // Created by Firefly on 2020/4/17.
 //
 
-<<<<<<< HEAD
-#include <iostream>
-#include <zconf.h>
-=======
->>>>>>> master
 #include "http_server.h"
 
 #include "debug_log.h"
