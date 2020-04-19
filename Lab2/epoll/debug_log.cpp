@@ -60,7 +60,7 @@ void Debug_LOG::write_log(const char *msg){
 	fwrite(message, strlen(message), 1, fp);
 	fflush(fp);
 #else
-	printf("\n%s", message);
+	printf("%s", message);
 	fflush(stdout);
 #endif
 }

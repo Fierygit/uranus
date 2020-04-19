@@ -5,6 +5,7 @@
 #include "request.h"
 #include <unistd.h>
 #include "sys/epoll.h"
+#include "debug_log.h"
 #include <iostream>
 
 bool clients_pool::add_one(httpt_request *request) {
@@ -26,7 +27,7 @@ void httpt_request::response_static() {
 void httpt_request::get_buff(int& epfd) {
     char buff[BUFF_SIZE];
     int str_len = read(this->fd, buff, BUFF_SIZE);
-    printf("str_len: %d\n", str_len);
+    DEBUG_LOG("str_len: %d", str_len);
     if (str_len > 0) {  //echo to client
         buff[str_len] = 0;
         for (int i = 0; i < str_len; i++) {
@@ -40,6 +41,6 @@ void httpt_request::get_buff(int& epfd) {
     } else {                                         //close connection
         epoll_ctl(epfd, EPOLL_CTL_DEL, this->fd, NULL);
         close(this->fd);
-        printf("Disconnected client %d!\n", this->fd);
+        DEBUG_LOG("Disconnected client %d!", this->fd);
     }
 }
