@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include "handler.h"
 #include "debug_log.h"
+#include "unistd.h"
 
 void check_event_type(uint32_t);
 
@@ -25,9 +26,8 @@ http_handler::http_handler() : thread_pool(new uranus::ThreadPool()), clients(ne
 bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
 
     // 创建 新的连接, 封装成一个request
-//    return this->thread_pool->addTask([&event, &serv_sock, &epfd, this]() {
+    return this->thread_pool->addTask([&event, &serv_sock, &epfd, this]() {
         check_event_type(event.events);
-
         sockaddr_in clnt_adr{};
         if (event.data.fd == serv_sock) {
             struct sockaddr_in client_address{};
@@ -37,26 +37,27 @@ bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
             //往内核事件表里添加事件
             event.events = EPOLLIN;
             event.data.fd = client_sock;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111
-            epoll_ctl(epfd, EPOLL_CTL_ADD, serv_sock, &event);
+            epoll_ctl(epfd, EPOLL_CTL_ADD, client_sock, &event);  // fuck ! 这里是 client_sock!!!
             fcntl(epfd, F_SETFL, fcntl(epfd, F_GETFD, 0) | O_NONBLOCK);
 
-            auto *request = new httpt_request();
+            auto *request = new httpt_request(client_sock);  // 要传递这个进去
             this->clients->add_one(request);
             DEBUG_LOG("a new client come: addr: %d, port: %d",
                       inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
-
         } else {
-
             auto request = this->clients->get_by_fd(event.data.fd);
+            request->get_buff(epfd);
+
             if (request->is_static()) {
+                // TODO: 解析
+
+                // TODO: 响应
                 request->response_static();
-            } else {
-                // 关闭连接
             }
         }
         return true;
 
-//    });
+    });
 
 }
 
