@@ -25,7 +25,7 @@ http_handler::http_handler() : thread_pool(new uranus::ThreadPool()), clients(ne
 bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
 
     // 创建 新的连接, 封装成一个request
-    return this->thread_pool->addTask([&event, &serv_sock, &epfd, this]() {
+//    return this->thread_pool->addTask([&event, &serv_sock, &epfd, this]() {
         check_event_type(event.events);
 
         sockaddr_in clnt_adr{};
@@ -46,6 +46,7 @@ bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
                       inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 
         } else {
+
             auto request = this->clients->get_by_fd(event.data.fd);
             if (request->is_static()) {
                 request->response_static();
@@ -53,9 +54,9 @@ bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
                 // 关闭连接
             }
         }
+        return true;
 
-
-    });
+//    });
 
 }
 
