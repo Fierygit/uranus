@@ -16,7 +16,8 @@ public:
     void response_static();
     void get_buff(int& epfd);
     bool is_static();
-
+    char* get_filename();
+    char* get_method();
 public:
     //存储你想存的东西
     std::string buf;

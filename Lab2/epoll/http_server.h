@@ -34,8 +34,8 @@ private:
 
 private:
 
-    int serv_sock;
-    uint16_t server_port;           // 端口号是 16 位的， 最多支持 2^16 次方的端口 大约几万个
+    int serv_sock;                  
+    uint16_t server_port;           // 端口号是 16 位的， 最多支持 2^16 次方的端口 大约几万个,//默认使用端口号7777
     std::string server_ip = "127.0.0.1";
     sockaddr_in server_addr{}; // 自动初始化,包括分配空间 {}， c11 的特性，一定要， 这是一个结构体
 
