@@ -25,9 +25,12 @@ public:
     bool is_sta;
     std::string url;
     std::string way;
+    //way为http请求的方法，可能是GET、POST，或者是其他不需要实现的方法（比如DELETE or PUT, HEAD, etc）
+    std::string Name;
+    std::string ID;
+    //如果POST请求的key不是Name和ID，则Name和ID的字符串为空
 public:
     int fd;
-
 public:
     httpt_request(int fd): fd(fd) {}
     httpt_request() {}

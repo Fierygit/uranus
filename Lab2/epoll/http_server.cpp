@@ -7,7 +7,7 @@
 #include "debug_log.h"
 #include <unistd.h>
 
-http_server::http_server() : http_server(7777) {}
+http_server::http_server() : http_server(8888) {}
 
 http_server::http_server(uint16_t server_port) : server_port(server_port) {
     init();

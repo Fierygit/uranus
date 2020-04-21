@@ -53,6 +53,7 @@ bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
 
                 // TODO: 响应
                 request->response_static();
+
             }
         }
         return true;
