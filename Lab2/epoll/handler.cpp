@@ -42,15 +42,14 @@ bool http_handler::dispatch(epoll_event &event, int serv_sock, int epfd) {
 
             auto *request = new httpt_request(client_sock);  // 要传递这个进去
             this->clients->add_one(request);
+            DEBUG_LOG("--------------------------\n");
             DEBUG_LOG("a new client come: addr: %d, port: %d",
                       inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
         } else {
             auto request = this->clients->get_by_fd(event.data.fd);
             request->get_buff(epfd);
-
             if (request->is_static()) {
                 // TODO: 解析
-
                 // TODO: 响应
                 request->response_static();
 
