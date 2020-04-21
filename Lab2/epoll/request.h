@@ -4,8 +4,10 @@
 
 
 
-#include <string>
+#include "string.h"
 #include <map>
+#include <sstream>
+#include <iostream>
 
 #define BUFF_SIZE 1024
 
@@ -22,7 +24,8 @@ public:
     //存储你想存的东西
     std::string buf;
     bool is_sta;
-
+    std::string url;
+    std::string way;
 public:
     int fd;
 

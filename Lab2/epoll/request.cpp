@@ -73,7 +73,27 @@ void httpt_request::get_buff(int& epfd) {
         for (int i = 0; i < str_len; i++) {
             this->buf += buff[i];
         }
-        std::cout << this->buf << std::endl;
+        std::cout << this->buf;
+        std::cout << "HTTP方法与url获取~~~"<< std::endl;
+        if ( buf.empty() )
+        {
+            return ;
+        }
+// 行缓冲区
+        char szLineBuf[256] = {0};
+// 通过流来提取报文头中内容
+        std::stringstream ssHeader(buf.c_str());
+// 提取第一行内容
+        ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
+        char  szHttpVersion[256] = {0};
+        char szHttpVersion1[256] = {0};
+        sscanf(szLineBuf,  "%[^ ]", szHttpVersion);
+        sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
+        way = szHttpVersion;
+        url = szHttpVersion1;
+        std::cout<<"方法是:"<<std::endl<<way<<std::endl;
+        std::cout<<"请求的url是:"<<std::endl<<url<<std::endl;
+        std::cout << "解析结束~~~"<< std::endl<<std::endl;
         // 可以返回了解析了
         this->is_sta = true;
 //        printf("Message from client %d: %s", this->fd, buff);
