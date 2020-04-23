@@ -21,47 +21,92 @@ httpt_request *clients_pool::get_by_fd(int client_sockt) {
 }
 
 bool httpt_request::is_static() {
-    std::cout << "HTTP方法与url获取~~~"<< std::endl;
-// 行缓冲区
-    char szLineBuf[128] = {0};
-    char httpbuff[256];
-    strcpy(httpbuff, buf.c_str());
-// 通过流来提取报文头中内容
-    int sizeBuf= sizeof(buf);
-    std::cout<<"测试1"<<sizeBuf<<std::endl
-    <<buf[sizeBuf-4]<<buf[sizeBuf-3]<<buf[sizeBuf-2]<<buf[sizeBuf-1]<<"测试2";
-    std::stringstream ssHeader(this->buf.c_str());
-// 提取第一行内容
-    ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
-    char  szHttpVersion[128] = {0};
-    char szHttpVersion1[128] = {0};
-    sscanf(szLineBuf,  "%[^ ]", szHttpVersion);
-    this->way = szHttpVersion;
-    if(this->way=="GET") {
-        sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
-        url = szHttpVersion1;
-        std::cout<<"方法是:"<<std::endl<<way<<std::endl;
-        std::cout<<"请求的url是:"<<std::endl<<url<<std::endl;
-    }
-    else if(this->way=="POST") {
-        char szHttpVersion2[128] = {0};
-        char szHttpVersion3[128] = {0};
-        sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
-        this->url = szHttpVersion1;
-        std::cout << "方法是:" << std::endl << this->way << std::endl;
-        std::cout << "请求的url是:" << std::endl << this->url << std::endl;
-        for (int i = 0; i < 7; i++) {
-            ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
+    DEBUG_LOG("HTTP方法与url获取~~~");
+    this->httpValid = false;
+    while(!this->buf.empty()) {
+        std::string endValid="\r\n\r\n";
+        std::string::size_type idx;
+        idx=this->buf.find(endValid);
+        if(idx == std::string::npos) {
+            httpValid=false;
+            return this->is_sta;
         }
-        sscanf(szLineBuf, "%*[^N]%*[^a]%*[^m]%*[^e]%*[^=]=%[^&]", szHttpVersion2);
-        sscanf(szLineBuf, "%*[^&]%*[^I]%*[^D]%*[^=]=%[^&]", szHttpVersion3);
-        this->Name = szHttpVersion2;
-        this->ID = szHttpVersion3;
-        std::cout << "Name:" << std::endl << this->Name << std::endl;
-        std::cout << "ID:" << std::endl << this->ID << std::endl;
-        //如果POST请求的key不是Name和ID，则Name和ID的字符串为空
+        else httpValid=true;
+        char szLineBuf[128] = {0};
+// 通过流来提取报文头中内容
+        int sizeBuf= sizeof(this->buf);
+        std::stringstream ssHeader(buf.c_str());
+// 提取第一行内容
+        ssHeader.getline(szLineBuf, sizeof(szLineBuf), '\r');
+        char  szHttpVersion[128] = {0};
+        char szHttpVersion1[128] = {0};
+        sscanf(szLineBuf,  "%[^ ]", szHttpVersion);
+        this->way = szHttpVersion;
+
+        if(this->way=="POST") {
+            char szHttpVersion2[128] = {0};
+            char szHttpVersion3[128] = {0};
+            sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
+            this->url = szHttpVersion1;
+            DEBUG_LOG("方法是:%s",this->way.c_str());
+            DEBUG_LOG("请求的url是:%s",this->url.c_str());
+            int point=0;
+            int Keylength=0;
+            point=this->buf.find("Content-Length:");
+//        cout<<endl<<point<<endl;
+            for(int i=point+16; buf[i]!='\r'; i++) {
+                Keylength=Keylength*10;
+                Keylength+=(int)buf[i]-48;
+            }
+//        cout<<Keylength<<endl;
+            point=buf.find('&');
+            for(int i=point; buf[i]!='\n'; i--) {
+                point--;
+            }
+//         cout<<point<<endl;
+            std::string KeyValid;
+            for(int i=point+1; i<point+1+Keylength; i++) {
+                KeyValid.push_back(buf[i]);
+            }
+//         cout<<KeyValid<<endl;
+            bool KEY=false;
+            if(KeyValid[0]=='N'&&KeyValid[1]=='a'&&KeyValid[2]=='m'&&KeyValid[3]=='e'&&KeyValid.find("ID")) {
+                KEY=true;
+            }
+
+            if(KEY) {
+                for(int i=5; KeyValid[i]!='&'; i++) {
+                    this->Name.push_back(KeyValid[i]);
+                }
+                for(int i=5,j=0; i<Keylength; i++) {
+                    if(j>=1) {
+                        this->ID.push_back(KeyValid[i]);
+                    }
+                    if(KeyValid[i]=='=')j++;
+                }
+                DEBUG_LOG("Name:%s ID:%s",this->Name.c_str(),this->ID.c_str());
+//                cout<<"Name:"<<Name<<"  ID:"<<ID<<endl;
+            }
+
+            std::string::iterator it;
+            it=this->buf.begin();
+            std::string::iterator it_1 = this->buf.begin();
+            buf.erase(it, it+point+Keylength+1);
+        }
+        else {
+            sscanf(szLineBuf, "%*[^ ] %[^ ]", szHttpVersion1);
+            this->url = szHttpVersion1;
+            DEBUG_LOG("方法是:%s",this->way.c_str());
+            DEBUG_LOG("请求的url是:%s",this->url.c_str());
+            std::string::iterator it;
+            it=this->buf.begin();
+            int piontget=buf.find("\r\n\r\n");
+            std::string::iterator it_1 = this->buf.begin();
+            this->buf.erase(it, it+piontget+4);
+        }
+//到此解析完一个完整的http协议，如果是两个协议连着一起发过来，则循环到开始解析下一个
     }
-    std::cout << "解析结束~~~"<< std::endl;
+    DEBUG_LOG("解析结束~~~");
     return this->is_sta;
 }
 void httpt_request::response_static() {

@@ -24,9 +24,11 @@ public:
     //存储你想存的东西
     std::string buf;
     bool is_sta;
+    bool httpValid;//表示http协议是否完整
     std::string url;
     std::string way;
     //way为http请求的方法，可能是GET、POST，或者是其他不需要实现的方法（比如DELETE or PUT, HEAD, etc）
+    //暂时只解析了GET和POST方法
     std::string Name;
     std::string ID;
     //如果POST请求的key不是Name和ID，则Name和ID的字符串为空
