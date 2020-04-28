@@ -25,13 +25,16 @@ httpt_request *clients_pool::get_by_fd(int client_sockt) {
 bool httpt_request::is_static() {
     DEBUG_LOG("HTTP方法与url获取~~~");
     this->httpValid = false;
-    while(!this->buf.empty()) {
+        if(this->buf.empty()) {
+            return false;
+        }
         std::string endValid="\r\n\r\n";
         std::string::size_type idx;
         idx=this->buf.find(endValid);
         if(idx == std::string::npos) {
             httpValid=false;
-            return this->is_sta;
+            this->buf.clear();
+            return false;
         }
         else httpValid=true;
         char szLineBuf[128] = {0};
@@ -106,10 +109,9 @@ bool httpt_request::is_static() {
             std::string::iterator it_1 = this->buf.begin();
             this->buf.erase(it, it+piontget+4);
         }
-//到此解析完一个完整的http协议，如果是两个协议连着一起发过来，则循环到开始解析下一个
-    }
+//到此解析完一个完整的http协议
     DEBUG_LOG("解析结束~~~");
-    return this->is_sta;
+    return true;
 }
 
 int httpt_request::getlen (const char*file){
