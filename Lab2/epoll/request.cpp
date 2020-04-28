@@ -10,6 +10,8 @@
 #include "sys/epoll.h"
 #include "debug_log.h"
 #include <iostream>
+#include <stdio.h>
+#include <cstring>
 
 bool clients_pool::add_one(httpt_request *request) {
     this->fd2request[request->fd] = request;
@@ -109,43 +111,88 @@ bool httpt_request::is_static() {
     DEBUG_LOG("解析结束~~~");
     return this->is_sta;
 }
+
+int httpt_request::getlen (const char*file){
+    // printf("fffffffffffffffffffff: %s\n",file);
+    FILE * pFile;
+    int size=0;
+    pFile = fopen (file,"rb");
+    if (pFile==NULL)
+        perror ("Error opening file");
+    else{
+        fseek (pFile, 0, SEEK_END);   ///将文件指针移动文件结尾
+        size=ftell (pFile); ///求出当前文件指针距离文件开始的字节数
+        fclose (pFile);
+        // printf ("Size of file.cpp: %ld bytes.\n",size);
+    }
+    return size;
+}
+
 void httpt_request::response_static() {
-    char response[BUFF_SIZE*10]={0};
-    char *filename=get_filename();
-    char *method=get_method();
-    if(method==(char*)"GET"){//GET方法
-        if(strlen(filename)==0){
-            filename=(char*)"index.html";
-        }
-        // printf("文件名是: %s\n",filename);
-        //响应
-        char*mine;
-        if(strstr(filename,".html"))
-            mine=(char*)"text/html";
-        else if(strstr(filename,".jpg"))
-            mine=(char*)"image/jpeg";
+    memset(response,0,sizeof(response));
+    //获得文件名，以及方法
+    const char *filename=get_filename();
+    const char *method=way.c_str();
+    char*mime;
+    if(strstr(filename,".html"))
+        mime=(char*)"text/html";
+    else if(strstr(filename,".jpg")){
+        mime=(char*)"image/jpeg";
+    }else if(strstr(filename,".ico")){
+        mime=(char*)"image/jpeg";
+    }
+    //webbench -c 10 http://127.0.0.1:8888/index.html
+    if(this->way=="GET"){//GET方法
+        //确定mime类型
+        //获得文件描述符
         int filefd=open(filename,O_RDONLY);
-        // printf("filefd: %d\n",filefd);
+        // printf("mime: %s\n",mime);
         sprintf(response,"HTTP/1.1 ");
         if(filefd<0){//不存在该文件
-            sprintf(response+strlen(response),"404 NOT FOUND\r\nContent-Type:%s\r\n\r\n",mine);
+            sprintf(response+strlen(response),"404 NOT FOUND\r\nContent-Type: %s\r\n\r\n",mime);
             filefd=open("404.html",O_RDONLY);
         }else{
-            sprintf(response+strlen(response),"200 OK\r\nContent-Type:%s\r\n\r\n",mine);
+            //得到文件的长度
+            int len=getlen(filename);
+            //Content-Length
+            sprintf(response+strlen(response),"200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n",mime,len);
         }
-        int headlen=strlen(response);
-        int filelen=read(filefd,response+headlen,sizeof(response)-headlen);
         write(fd,response,strlen(response));
+        memset(response,0,sizeof(response));
+        while(1){
+            int filelen=read(filefd,response,1);
+            if(filelen<=0)break;
+            write(fd,response,filelen);
+        }
         close(filefd);
-    }else if(method==(char*)"POST"){
+    }else if(this->way==(char*)"POST"){
         // printf("POST METHOD--------------------------\n");
+        if(this->Name=="Name"&&this->ID=="ID"){
+            sprintf(response,"HTTP/1.1 200 OK\r\n\r\n");
+            write(fd,response,strlen(response));
+        }else{
+            sprintf(response,"HTTP/1.1 ");
+            sprintf(response+strlen(response),"404 NOT FOUND\r\nContent-Type: %s\r\n\r\n",mime);
+            int filefd=open("404.html",O_RDONLY);
+            write(fd,response,strlen(response));
+            memset(response,0,sizeof(response));
+            while(1){
+                int filelen=read(filefd,response,1);
+                if(filelen<=0)break;
+                write(fd,response,filelen);
+            }
+            close(filefd);
+        }
     }else{
-        sprintf(response,"HTTP/1.1 505 ERROR\r\n\r\n");
+        sprintf(response,"HTTP/1.1 501 ERROR\r\n\r\n");
         write(fd,response,strlen(response));
     }
+    
+    // std::cout<<"here\n";
 }
-char* httpt_request::get_filename(){
-    return (char*)("index.html");
+const char* httpt_request::get_filename(){
+    newurl="."+url;
+    return newurl.c_str();
 }
 char* httpt_request::get_method(){
     return (char*)("GET");
