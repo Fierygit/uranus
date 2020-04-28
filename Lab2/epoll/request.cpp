@@ -191,7 +191,11 @@ void httpt_request::response_static() {
     // std::cout<<"here\n";
 }
 const char* httpt_request::get_filename(){
-    newurl="."+url;
+    if(this->url=="/"){
+        newurl="./index.html";
+    }else{
+        newurl="."+url;
+    }
     return newurl.c_str();
 }
 char* httpt_request::get_method(){
