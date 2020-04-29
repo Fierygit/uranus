@@ -13,7 +13,16 @@
 
 void check_event_type(uint32_t);
 
-http_handler::http_handler() : thread_pool(new uranus::ThreadPool()), clients(new clients_pool()) {}
+http_handler::http_handler() : 
+    thread_pool(new uranus::ThreadPool()), 
+    clients(new clients_pool()) 
+    {}
+
+// 带"线程数量参数"
+http_handler::http_handler(uint16_t numThread = 5) : 
+    thread_pool(new uranus::ThreadPool(numThread)), 
+    clients(new clients_pool()) 
+    {}
 
 
 /**

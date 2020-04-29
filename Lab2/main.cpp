@@ -20,24 +20,24 @@ int main(int argc, char *argv[]) {
         switch (c) {
             case 'p':
                 port = atoi(optarg);
-                printf("port is %s\n", optarg);
+                DEBUG_LOG("port is %s\n", optarg);
                 break;
             case 'i':
                 ip = (std::string)optarg;
-                printf("ip is %s\n", optarg);
+                DEBUG_LOG("ip is %s\n", optarg);
                 break;
             case 't':
                 numThread = atoi(optarg);
-                printf("number thread is %s\n", optarg);
+                DEBUG_LOG("number thread is %s\n", optarg);
                 break;
             case '?':
-                printf("unknown option\n");
+                DEBUG_LOG("unknown option\n");
                 break;
             case 0:
-                printf("the return val is 0\n");
+                DEBUG_LOG("the return val is 0\n");
                 break;
             default:
-                printf("------\n");
+                DEBUG_LOG("------\n");
         }
     }
 

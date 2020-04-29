@@ -8,6 +8,7 @@
 class http_handler {
 public:
     http_handler();
+    http_handler(uint16_t);
 
 public:
     bool dispatch(struct epoll_event &event, int listen_fd, int epfd);

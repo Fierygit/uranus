@@ -17,6 +17,7 @@ http_server::http_server(uint16_t server_port) : server_port(server_port) {
 http_server::http_server(std::string ip, uint16_t port, uint16_t numThread) {
     server_port = port;
     server_ip = ip;
+    server_thread = numThread;
     init();
 }
 
@@ -137,7 +138,7 @@ void http_server::init_epoll() {
 }
 
 void http_server::init_others() {
-    this->handler = new http_handler();
+    this->handler = new http_handler(server_thread);
 }
 
 
