@@ -1,5 +1,5 @@
-ThreadPoolTest: ThreadPoolTest.cpp ThreadPool.cpp
-	g++ -g -o ThreadPoolTest -std=c++0x ThreadPoolTest.cpp ThreadPool.cpp -lpthread
+httpserver:
+	g++ -o httpserver -pthread main.cpp http_server.cpp handler.cpp debug_log.cpp ThreadPool.cpp request.cpp
 
 clean:
-	rm ThreadPoolTest
+	rm httpserver

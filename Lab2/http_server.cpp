@@ -14,6 +14,12 @@ http_server::http_server(uint16_t server_port) : server_port(server_port) {
     //std::cout << this->epfd << " "  << std::endl;
 }
 
+http_server::http_server(std::string ip, uint16_t port, uint16_t numThread) {
+    server_port = port;
+    server_ip = ip;
+    init();
+}
+
 http_server::~http_server() {
     std::cout << "destruct" << std::endl;
     close(serv_sock); //关闭socket

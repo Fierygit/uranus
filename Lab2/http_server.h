@@ -20,6 +20,7 @@ public:
     http_server();
 
     http_server(uint16_t server_port);
+    http_server(std::string ip, uint16_t server_port, uint16_t numThread);
     ~http_server(); //创建完，为什么自动析构？？？
     void start();
 
