@@ -5,10 +5,12 @@
 
 
 int main(int argc, char *argv[]) {
+    // 参数默认值
     std::string ip = "127.0.0.1";
     int port = 8888;
     int numThread = 4;
 
+    // 长短参数解析
     const char *optstring = "p:i:t:";
     int c;
     struct option opts[] = {
@@ -20,15 +22,15 @@ int main(int argc, char *argv[]) {
         switch (c) {
             case 'p':
                 port = atoi(optarg);
-                DEBUG_LOG("port is %s\n", optarg);
+                // DEBUG_LOG("port is %s\n", optarg);
                 break;
             case 'i':
                 ip = (std::string)optarg;
-                DEBUG_LOG("ip is %s\n", optarg);
+                // DEBUG_LOG("ip is %s\n", optarg);
                 break;
             case 't':
                 numThread = atoi(optarg);
-                DEBUG_LOG("number thread is %s\n", optarg);
+                // DEBUG_LOG("number thread is %s\n", optarg);
                 break;
             case '?':
                 DEBUG_LOG("unknown option\n");
@@ -40,7 +42,11 @@ int main(int argc, char *argv[]) {
                 DEBUG_LOG("------\n");
         }
     }
-
+    // ip等日志信息
+    DEBUG_LOG(("ip \t\t: " + ip).c_str());
+    DEBUG_LOG(("port \t: " + std::to_string(port)).c_str());
+    DEBUG_LOG(("num thread \t: " + std::to_string(numThread)).c_str());
+    DEBUG_LOG("\n");
     auto *server = new http_server(ip, port, numThread);
     server->start();
     std::cout << "Hello, World!" << std::endl;
