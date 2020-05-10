@@ -5,8 +5,8 @@
 #include "../coordinator/BoundedBlockingQueue.h"
 
 
-int main(){
-     BoundedBlockingQueue<int> give_me_a_name(12);
+int main() {
+    BoundedBlockingQueue<int> give_me_a_name(12);
     std::cout << "he";
 
 }

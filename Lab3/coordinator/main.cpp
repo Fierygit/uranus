@@ -1,8 +1,8 @@
 #include <iostream>
-
+#include "CoServer.h"
 
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    CoServer().init().run();
     return 0;
 }

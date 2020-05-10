@@ -8,8 +8,8 @@
 
 
 /*
- * 基于 cir_buffer 实现一个blockingQueue
- */
+ * 把生产者与消费者问题的buf 换成队列， 注意要线程安全
+ * */
 
 template<typename T>
 class BoundedBlockingQueue {
@@ -17,7 +17,6 @@ public:
     explicit BoundedBlockingQueue(int maxSize) {
         std::cout << maxSize << std::endl;
     }
-
 
 
     void put(const T &x) {}
