@@ -45,7 +45,7 @@ target_link_libraries(
         pthread
 )
 
-##############测试
+##############测试 "生产者消费者"
 enable_testing()
 
 add_executable(testBlockingqueue
