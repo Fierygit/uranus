@@ -35,6 +35,7 @@ void clientAcceptHandler(CoServer *coServer) {
          * 创建一个子的线程全程处理， 新的 client 的 io，读完之后， 放到 blockingqueue
          */
         Client client{clientSocket, clientAddr, true, ""};
+//        coServer->getClients()
         std::thread tmpThread{[coServer, client]() {
             clientReadHandler(SubClientContex{coServer, client});
         }};
@@ -68,7 +69,7 @@ void clientReadHandler(SubClientContex ctx) {
         LOG_F(INFO, "%d\t%s\t%s", command.op, command.key.c_str(), command.value.c_str());
 
         /*
-         * 放入 blockingqueue
+         * 放入 blockingqueue, 让 2pc 线程处理
          */
 
         if (send(clientSocket, buf, len, 0) < 0) {

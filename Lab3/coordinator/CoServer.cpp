@@ -25,6 +25,12 @@ std::string welcomeLogo = "             _  .-')     ('-.         .-') _         
 
 void CoServer::run() {
     for (;;) {
+        Command command = this->commands->get();
+
+        /*
+         *  2pc here !!!!!!!
+         */
+
     }
 
 }
@@ -90,5 +96,14 @@ CoServer CoServer::init() {
 int CoServer::getServerSockfd() const {
     return serverSockfd;
 }
+
+const CoServer::Clients &CoServer::getClients() const {
+    return clients;
+}
+
+void CoServer::addClient(Client client) const {
+
+}
+
 
 
