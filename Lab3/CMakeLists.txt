@@ -51,9 +51,8 @@ add_executable(testBlockingqueue
         coordinator/BoundedBlockingQueue.h)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
-
 # 添加 thread
 target_link_libraries(
-        ${PROJECT_NAME}
+        testBlockingqueue
         pthread
 )
