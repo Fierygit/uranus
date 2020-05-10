@@ -12,7 +12,7 @@ add_executable(coordinator
         coordinator/main.cpp
         coordinator/CoServer.h
         coordinator/CoServer.cpp
-        )
+        coordinator/clientHandler.cpp coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp)
 
 target_link_libraries(
         coordinator
