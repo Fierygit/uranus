@@ -12,7 +12,7 @@ add_executable(coordinator
         coordinator/main.cpp
         coordinator/CoServer.h
         coordinator/CoServer.cpp
-        coordinator/clientHandler.cpp coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp)
+        coordinator/clientHandler.cpp coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
 
 target_link_libraries(
         coordinator
@@ -24,12 +24,14 @@ target_link_libraries(
 # 客户端####################################
 set(CLIENT "client")
 add_executable(${CLIENT}
-        client/main.cpp)
+        common/loguru.cpp
+        client/main.cpp client/Client.h client/Client.cpp)
 
-# 添加 thread
+# 添加 thread   dynamic link?
 target_link_libraries(
-        ${PROJECT_NAME}
+        client
         pthread
+        dl
 )
 
 # 参与者

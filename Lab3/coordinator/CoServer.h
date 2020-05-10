@@ -18,6 +18,7 @@ struct Client {
     int fd; // socket 的文件描述符
     sockaddr_in addr;
     bool isAlive;
+    std::string buf;
 };
 
 struct Participant {
@@ -69,6 +70,7 @@ private:
 
 
 };
+
 
 
 #endif //LAB3_COSERVER_H

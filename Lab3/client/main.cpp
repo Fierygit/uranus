@@ -1,8 +1,8 @@
 #include <iostream>
+#include "Client.h"
 
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    while (1);
+    Client().init()->run();
     return 0;
 }

@@ -1,5 +1,5 @@
 cd ..
 git add .
-echo '请写commit注释！！！'
+echo 'please write what you have done!!'
 git commit
 git push
