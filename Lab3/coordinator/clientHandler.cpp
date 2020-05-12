@@ -46,7 +46,7 @@ void clientAcceptHandler(CoServer *coServer) {
 }
 
 
-void clientReadHandler(SubClientContex ctx) {
+void clientReadHandler(const SubClientContex& ctx) {
     int clientSocket = ctx.client.fd;
     sockaddr_in clientAddr = ctx.client.addr;
     std::string clientBuf;

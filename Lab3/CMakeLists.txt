@@ -49,12 +49,29 @@ target_link_libraries(
 enable_testing()
 
 add_executable(testBlockingqueue
+        common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h)
+        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
 # 添加 thread
 target_link_libraries(
         testBlockingqueue
         pthread
+        dl
+)
+
+
+#######################################33333
+add_executable(testEncoder
+        common/loguru.cpp
+)
+
+add_test(NAME testEncoder COMMAND testEncoder)
+
+# 添加 thread
+target_link_libraries(
+        testEncoder
+        pthread
+        dl
 )
