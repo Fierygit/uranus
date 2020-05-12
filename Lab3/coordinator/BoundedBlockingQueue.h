@@ -2,7 +2,7 @@
 #define MUDUO_BASE_BOUNDEDBLOCKINGQUEUE_H
 
 
-#include <assert.h>
+#include <cassert>
 #include <mutex>
 #include <condition_variable>
 #include <vector>
@@ -36,6 +36,7 @@ public:
             // 传 引用
             notFull.wait(std::ref(lck));
         }
+        assert(put_idx_ < capacity_ && put_idx_ >= 0);
         queue_[put_idx_] = x;
         put_idx_++;
         size_++;
@@ -55,6 +56,7 @@ public:
         while (size_ == 0) {
             notEmpty.wait(std::ref(lck));
         }
+        assert(get_idx_ < capacity_ && get_idx_ >= 0);
         T val = queue_[get_idx_];
         get_idx_++;
         size_--;
