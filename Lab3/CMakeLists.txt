@@ -65,6 +65,7 @@ target_link_libraries(
 #######################################33333
 add_executable(testEncoder
         common/loguru.cpp
+        test/testEncoder.cpp
 )
 
 add_test(NAME testEncoder COMMAND testEncoder)
