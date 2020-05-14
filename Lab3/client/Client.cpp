@@ -45,7 +45,7 @@ void Client::run() {
     char buf[BUFSIZ];  //数据传送的缓冲区
     printf("connected to server\n");
     int len = recv(clientSockfd, buf, BUFSIZ, 0);//接收服务器端信息
-    buf[len] = '/0';
+    buf[len] = '\0';
     std::cout << buf << std::endl;
 
     // 同步执行

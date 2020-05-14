@@ -58,23 +58,36 @@ add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 target_link_libraries(
         testBlockingqueue
         pthread
-        dl
 )
 
-
-#######################################33333
-add_executable(testEncoder
-        common/loguru.cpp
+############测试decoder
+add_executable(testDecoder
+        test/testDecoder.cpp
         common/Util.h
         common/public.h
+        )
+
+
+#######################################测试encoder
+add_executable(testEncoder
+#        common/loguru.cpp
         test/testEncoder.cpp
-)
+        common/Util.h
+        )
 
-add_test(NAME testEncoder COMMAND testEncoder)
+#add_test(NAME testEncoder COMMAND testEncoder)
+#
+## 添加 thread
+#target_link_libraries(
+#        testEncoder
+#        pthread
+#        dl
+#)
 
-# 添加 thread
-target_link_libraries(
-        testEncoder
-        pthread
-        dl
-)
+# 测试半包
+############测试decoder
+add_executable(testBanbao
+        test/testBanBao.cpp
+        common/Util.h
+        common/public.h
+        )

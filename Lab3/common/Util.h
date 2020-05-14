@@ -7,7 +7,9 @@
 
 #include <string>
 #include "public.h"
-#include <stdio.h>
+#include <sstream>
+#include <string>
+
 
 
 class Util {
@@ -23,262 +25,144 @@ public:
     /*
      * //!!!解析失败请返回 null
      */
-    static void EncoderNum(std::string &RespBuf, int sum) {
-        if(sum!=0){
-            if(sum>=10) {
-                int sumback=0;
-                int tempSum=sum;
-                LOG_F(INFO,"sum:%d",sum);
-                for(; sum!=0; ) {
-                    sumback=sumback*10+sum%10;
-                    sum=sum/10;
-                }
-                for(; sumback!=0; ) {
-                    RespBuf+=(sumback%10+48);
-                    sumback=sumback/10;
-                }
-                while(tempSum!=0&&tempSum%10==0) {
-                    RespBuf+=48;
-                    tempSum=tempSum/10;
-                }
-            } else {
-                RespBuf+=sum+48;
-            }
-        }
+    static std::string heBin(std::string &buf){
+        std::stringstream ss;
+        std::string restr;
+//        int len = buf.size();
+        if(*buf.begin()=='\"')buf.erase(buf.begin());
+        if(*(--buf.end())=='\"')buf.erase(--buf.end());
+        int len = buf.size();
+        ss << len;
+        ss >> restr;
+//        if(!(buf=="GET"||buf=="SET"||buf=="DEL"))
+        restr = "$" + restr;
+        restr += "\r\n";
+        restr += buf;
+        restr += "\r\n";
+        return restr;
     }
     static std::string Encoder(std::string &buf) {
-        std::string RespBuf;
-        std::string OP;
-        std::string key;
-        std::string value;
-        if(buf.empty()) {
-            LOG_F(ERROR,"buf is empty");
-            return "null";
-        }
-        for(int i=0; i<buf.length(); i++) {
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else break;
+        std::stringstream ss;
+        ss<<buf;
+        std::string catego,mid;
+        std::string restr="";
+        int tot = 0;
+        ss>>catego;
+        if(catego=="GET"||catego=="SET"||catego=="DEL"){
+            restr += heBin(catego);
+            tot++;
+            while(ss>>mid){
+                tot++;
+                restr += heBin(mid);
             }
-            if(i+3<buf.length()) {
-                OP+=buf[i];
-                OP+=buf[i+1];
-                OP+=buf[i+2];
-                break;
-            }
-            else return "null";
-        }
-        if(OP=="SET") {
-            int i=0;
-            for(; i<buf.length(); i++) {
-                if(buf[i]=='T')break;
-            }
-            i++;
-            if(buf[i]!=' ')return "null";
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else break;
-            }
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')break;
-                key+=buf[i];
-            }
-            if(key.empty()) {
-                LOG_F(ERROR,"buf is empty");
-                return "null";
-            }
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else break;
-            }
-            if(buf[i]!='\"') {
-                LOG_F(ERROR,"not know what");
-                return "null";
-            }
-            for(i++; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else break;
-            }
-            for(; i<buf.length(); i++) {
-                if(buf[i]=='\"')break;
-                value+=buf[i];
-            }
-            if(value.empty()) {
-                LOG_F(ERROR,"value is empty");
-                return "null";
-            }
-            if(buf[i]!='\"') {
-                LOG_F(ERROR,"don't have \" in the end");
-                return "null";
-            }
-            for(i++; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else {
-                    LOG_F(ERROR,"wrong ending");
+            if(catego=="SET"){
+                if((tot<3)||(buf.find('\"')==buf.rfind('\"')))
                     return "null";
-                }
             }
-            LOG_F(INFO,"OP:%s",OP.c_str());
-            LOG_F(INFO,"key:%s",key.c_str());
-            LOG_F(INFO,"value:%s",value.c_str());
-            int encodeCount = 1;
-            for(int i=0; i<value.length(); i++) {
-                    if(value[i]==' ')encodeCount++;
-                for(; i<value.length(); i++) {
-                    if(value[i]==' ')continue;
-                    else break;
-                }
-            }
-            if(value[0]==' ')encodeCount--;
-            if(value[value.length()-1]==' ')encodeCount--;
-            LOG_F(INFO,"encodeCount:%d",encodeCount);
-            RespBuf+='*';
-            EncoderNum(RespBuf,encodeCount+2);
-            RespBuf+="\r\n";
-            RespBuf+='$';
-            RespBuf+=OP.length()+48;
-            RespBuf+="\r\n";
-            RespBuf+=OP;
-            RespBuf+="\r\n";
-            RespBuf+='$';
-            EncoderNum(RespBuf,key.length());
-            RespBuf+="\r\n";
-            RespBuf+=key;
-            RespBuf+="\r\n";
-            if(encodeCount==1) {
-                RespBuf+='$';
-                int sum=0;
-                for(int i=0; i<value.length(); i++) {
-                    if(value[i]==' ')break;
-                    sum++;
-                }
-                EncoderNum(RespBuf,sum);
-                RespBuf+="\r\n";
-                for(int i=0; i<sum; i++) RespBuf+=value[i];
-                RespBuf+="\r\n";
-            } else if(encodeCount>1){
-                for(int i=0,j=0,ij=0,sum=0; i<encodeCount; i++) {
-                    if(j==0&&value[0]==' ') {
-                        for(; j<value.length(); j++) {
-                            if(value[j]==' ')continue;
-                            else break;
-                        }
-                    }
-                    RespBuf+='$';
-                    sum=0;
-                    ij=j;
-                    for(; j<value.length(); j++) {
-                        if(value[j]==' ')break;
-                        sum++;
-                    }
-                    if(sum!=0){
-                        EncoderNum(RespBuf,sum);
-                        RespBuf+="\r\n";
-                    }
-                    for(;ij<j; ij++)RespBuf+=value[ij];
-                    RespBuf+="\r\n";
-                    for(; j<value.length(); j++) {
-                        if(value[j]==' ')continue;
-                        else break;
-                    }
-                }
-            }
-
-        }
-        else if(OP=="GET") {
-            int i=0;
-            for(; i<buf.length(); i++) {
-                if(buf[i]=='T')break;
-            }
-            i++;
-            if(buf[i]!=' ')return "null";
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')continue;
-                else break;
-            }
-            for(; i<buf.length(); i++) {
-                if(buf[i]==' ')break;
-                key+=buf[i];
-            }
-            if(key.empty()) {
-                LOG_F(ERROR,"buf is empty");
+            if(catego=="GET"&&tot!=2){
                 return "null";
             }
-            for(; i<buf.length(); i++) {
-                if(buf[i]!=' ')return "null";
+            if(catego=="DEL"&&tot<2){
+                return "null";
             }
-            LOG_F(INFO,"OP:%s",OP.c_str());
-            LOG_F(INFO,"key:%s",key.c_str());
-            RespBuf+='*';
-            RespBuf+=50;
-            RespBuf+="\r\n";
-            RespBuf+='$';
-            RespBuf+=OP.length()+48;
-            RespBuf+="\r\n";
-            RespBuf+=OP;
-            RespBuf+="\r\n";
-            RespBuf+='$';
-            EncoderNum(RespBuf,key.length());
-            RespBuf+="\r\n";
-            RespBuf+=key;
-            RespBuf+="\r\n";
+            ss.clear();
+            ss << tot;
+            std::string strint;
+            ss >> strint;
+            strint = "*" + strint;
+            strint += "\r\n";
+            restr = strint + restr;
+        }else{
+            restr = "null";
         }
-        else if(OP=="DEL") {
-            int encodeCount = 1;
-            for(int i=0; i<buf.length(); i++) {
-                if(buf[i]==' ')encodeCount++;
-                for(; i<buf.length(); i++) {
-                    if(buf[i]==' ')continue;
-                    else break;
-                }
-            }
-            if(buf[0]==' ')encodeCount--;
-            if(buf[buf.length()-1]==' ')encodeCount--;
-            LOG_F(INFO,"encodeCount:%d",encodeCount);
-            if(encodeCount<=1)return "null";
-            else if(encodeCount>1){
-                RespBuf+='*';
-                EncoderNum(RespBuf,encodeCount);
-                RespBuf+="\r\n";
-                for(int i=0,j=0,ij=0,sum=0; i<encodeCount; i++) {
-                    if(j==0&&buf[0]==' ') {
-                        for(; j<buf.length(); j++) {
-                            if(buf[j]==' ')continue;
-                            else break;
-                        }
-                    }
-                    RespBuf+='$';
-                    sum=0;
-                    ij=j;
-                    for(; j<buf.length(); j++) {
-                        if(buf[j]==' ')break;
-                        sum++;
-                    }
-                    EncoderNum(RespBuf,sum);
-                    RespBuf+="\r\n";
-                    for(;ij<j; ij++)RespBuf+=buf[ij];
-                    RespBuf+="\r\n";
-                    for(; j<buf.length(); j++) {
-                        if(buf[j]==' ')continue;
-                        else break;
-                    }
-                }
-            }
-        }
-        else {
-            return "null";
-        }
-
-        return RespBuf;
+        return restr;
     }
 
     static Command Decoder(std::string &buf) {
-        return Command();
+        std::stringstream ss;
+        Command reCommand;
+        ss<<buf;
+        std::string mid;
+        bool ok = false;
+        while(ss>>mid){
+            if(mid=="GET"){
+                reCommand.op = GET;
+                ss>>mid;
+                ss>>reCommand.key;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.key += mid;
+                    }
+                }
+                ok = true;
+                break;
+            }else if(mid=="SET"){
+                reCommand.op = SET;
+                ss>>mid;
+                ss>>reCommand.key;
+                ss>>mid;
+                ss>>reCommand.value;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.value += mid;
+                    }
+                }
+                ok = true;
+                break;
+            }else if(mid=="DEL"){
+                reCommand.op = DEL;
+                ss>>mid;
+                ss>>reCommand.key;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.key += mid;
+                    }
+                }
+                ok = true;
+                break;
+            }
+        }
+        return reCommand;
+    }
+    static int StrToNum(std::string str){
+        std::stringstream ss;
+        int renum;
+        ss<<str;
+        ss>>renum;
+        return renum;
+    }
+    static bool HandleBanBao(std::string str){
+        //*4\r\n$3\r\nSET\r\n$7\r\nCS06142\r\n$5\r\nCloud\r\n$9\r\nComputing\r\n
+        std::stringstream ss;
+        std::stringstream strtonum;
+        ss<<str;
+        int tot = 0;
+        std::string mid;
+        ss>>mid;
+        if(mid[0]!='*')return false;
+        else{
+            mid.erase(mid.begin());
+            tot = StrToNum(mid);
+            int temp = 0;
+            int all = 0;
+            while(ss>>mid){
+                if(mid[0]!='$')return false;
+                mid.erase(mid.begin());
+                temp = StrToNum(mid);
+                ss>>mid;
+                if(temp==mid.size())all++;
+                else return false;
+            }
+            if(tot != all)return false;
+        }
+        return true;
     }
 
 private:
-
-
+//    static std::stringstream ss;
 };
 
 
