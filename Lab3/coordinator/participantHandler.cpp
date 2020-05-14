@@ -5,5 +5,5 @@
 
 void participantHandler(CoServer *) {
 
-    LOG_F(INFO, "client is bad : %s", "^_^ todo next year");
+    LOG_F(INFO, "participant is bad : %s", "^_^ todo next year");
 }

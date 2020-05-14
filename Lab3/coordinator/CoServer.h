@@ -39,7 +39,7 @@ public:
 
     // 初始化地址就够了
     CoServer(std::string ip, int port) :
-            port(8888), ip(std::move(ip)), commands(new BoundedBlockingQueue<Command>()) {}
+            port(8888), ip(std::move(ip)), tastNodes(new BoundedBlockingQueue<TaskNode>()) {}
 
 private:
 
@@ -56,9 +56,11 @@ public:
  * 系统信息
  */
 
-private:
+public:
     using Clients = std::vector<Client>;
     using Participants = std::vector<Participant>;
+    using TaskNode = std::pair<Client,Command>;
+
 public:
     const Clients &getClients() const;
 
@@ -66,7 +68,11 @@ public:
 
 private:
     //把并行的强行转为 串行， 最多等待 n 个任务， 当大于时， 停止服务 important
-    BoundedBlockingQueue<Command> *commands;
+    BoundedBlockingQueue<TaskNode> *tastNodes;
+public:
+    BoundedBlockingQueue<TaskNode> *getTastNodes() const;
+
+private:
     Clients clients;
     Participants participants;
 

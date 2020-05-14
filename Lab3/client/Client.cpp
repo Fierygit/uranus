@@ -43,7 +43,7 @@ void Client::run() {
 
     // 测试， 收服务端的消息
     char buf[BUFSIZ];  //数据传送的缓冲区
-    printf("connected to server\n");
+//    printf("connected to server\n");
     int len = recv(clientSockfd, buf, BUFSIZ, 0);//接收服务器端信息
     buf[len] = '\0';
     std::cout << buf << std::endl;
@@ -53,13 +53,10 @@ void Client::run() {
         std::cout << "uranus client > ";
         std::string line;
         getline(std::cin, line);
-        std::cout << line << std::endl; //ceshi
+        // std::cout << line << std::endl; //ceshi
         std::string sendMsg = Util::Encoder(line);
-        if (sendMsg != "null") {
-            sendToServer(sendMsg);
-        } else {
-            std::cout << "Error!!" << std::endl;
-        }
+        if (sendMsg != "null") sendToServer(sendMsg);
+        else std::cout << "Error!!" << std::endl;
     }
 
 }
@@ -69,11 +66,16 @@ void Client::sendToServer(std::string msg) {
     // 所有的 send 都要 try catch
     int len = send(clientSockfd, msg.c_str(), msg.size(), 0);
     if (len != msg.size()) {
-        std::cout << "Error" << std::endl;
+        // 错误处理！！！
+        std::cout << "Error**************************" << std::endl;
     } else {
         std::cout << "ok" << std::endl;
     }
-    // 等待接收消息
+    // 等待接收消息，收到了才可以处理下一条消息
 
+    char buf[BUFSIZ];  //数据传送的缓冲区
+    len = recv(clientSockfd, buf, BUFSIZ, 0);//接收服务器端信息
+    buf[len] = '\0';
+    std::cout << buf << std::endl;
 }
 
