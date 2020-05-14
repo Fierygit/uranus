@@ -24,13 +24,62 @@ public:
     /*
      * //!!!解析失败请返回 null
      */
+    static std::string heBin(std::string &buf){
+        std::stringstream ss;
+        std::string restr;
+//        int len = buf.size();
+        if(*buf.begin()=='\"')buf.erase(buf.begin());
+        if(*(--buf.end())=='\"')buf.erase(--buf.end());
+        int len = buf.size();
+        ss << len;
+        ss >> restr;
+//        if(!(buf=="GET"||buf=="SET"||buf=="DEL"))
+        restr = "$" + restr;
+        restr += "\r\n";
+        restr += buf;
+        restr += "\r\n";
+        return restr;
+    }
     static std::string Encoder(std::string &buf) {
-        return buf;
+        std::stringstream ss;
+        ss<<buf;
+        std::string catego,mid;
+        std::string restr="";
+        int tot = 0;
+        ss>>catego;
+        if(catego=="GET"||catego=="SET"||catego=="DEL"){
+            restr += heBin(catego);
+            tot++;
+            //*4\r\n$3\r\nSET\r\n$7\r\nCS06142\r\n$5\r\nCloud\r\n$9\r\nComputing\r\n
+            while(ss>>mid){
+                tot++;
+                restr += heBin(mid);
+            }
+            if(catego=="SET"&&tot<3){
+                return "null";
+            }
+            if(catego=="GET"&&tot!=2){
+                return "null";
+            }
+            if(catego=="DEL"&&tot<2){
+                return "null";
+            }
+            ss.clear();
+            ss << tot;
+            std::string strint;
+            ss >> strint;
+            strint = "*" + strint;
+            strint += "\r\n";
+            restr = strint + restr;
+        }else{
+            restr = "null";
+        }
+        return restr;
     }
 
     static Command Decoder(std::string &buf) {
-        Command reCommand;
         std::stringstream ss;
+        Command reCommand;
         ss<<buf;
         std::string mid;
         bool ok = false;
@@ -42,7 +91,7 @@ public:
                 while(ss>>mid){
                     if(mid[0]!='$'){
                         mid = " " + mid;
-                        reCommand.key.append(mid);
+                        reCommand.key += mid;
                     }
                 }
                 ok = true;
@@ -56,7 +105,7 @@ public:
                 while(ss>>mid){
                     if(mid[0]!='$'){
                         mid = " " + mid;
-                        reCommand.value.append(mid);
+                        reCommand.value += mid;
                     }
                 }
                 ok = true;
@@ -68,7 +117,7 @@ public:
                 while(ss>>mid){
                     if(mid[0]!='$'){
                         mid = " " + mid;
-                        reCommand.key.append(mid);
+                        reCommand.key += mid;
                     }
                 }
                 ok = true;
@@ -76,12 +125,10 @@ public:
             }
         }
         return reCommand;
-//        return Command();
     }
 
 private:
-
-
+//    static std::stringstream ss;
 };
 
 

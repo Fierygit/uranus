@@ -68,17 +68,18 @@ add_executable(testDecoder
         )
 
 
-#######################################33333
+#######################################测试encoder
 add_executable(testEncoder
-        common/loguru.cpp
+#        common/loguru.cpp
         test/testEncoder.cpp
-)
+        common/Util.h
+        )
 
-add_test(NAME testEncoder COMMAND testEncoder)
-
-# 添加 thread
-target_link_libraries(
-        testEncoder
-        pthread
-        dl
-)
+#add_test(NAME testEncoder COMMAND testEncoder)
+#
+## 添加 thread
+#target_link_libraries(
+#        testEncoder
+#        pthread
+#        dl
+#)

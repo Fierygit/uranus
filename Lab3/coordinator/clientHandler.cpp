@@ -62,11 +62,11 @@ void clientReadHandler(const SubClientContex& ctx) {
     /*接收客户端的数据并将其发送给客户端--recv返回接收到的字节数，send返回发送的字节数*/
     while ((len = recv(clientSocket, buf, BUFSIZ, 0)) > 0) {
         buf[len] = '\0';
-        LOG_F(INFO, "%s\n", buf);
+        LOG_F(INFO, "\n%s\n", buf);
         clientBuf.append(buf);
         Command command = Util::Decoder(clientBuf);
 
-        LOG_F(INFO, "%d\t%s\t%s", command.op, command.key.c_str(), command.value.c_str());
+        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
 
         /*
          * 放入 blockingqueue, 让 2pc 线程处理
@@ -76,6 +76,7 @@ void clientReadHandler(const SubClientContex& ctx) {
             LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
             return;
         }
+        clientBuf.clear();
     }
 
 
