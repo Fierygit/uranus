@@ -58,3 +58,9 @@ target_link_libraries(
         testBlockingqueue
         pthread
 )
+
+############测试decoder
+add_executable(testDecoder
+        test/testDecoder.cpp
+        common/Util.h
+        common/public.h)

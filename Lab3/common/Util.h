@@ -7,6 +7,7 @@
 
 #include <string>
 #include "public.h"
+#include <sstream>
 
 
 
@@ -28,7 +29,54 @@ public:
     }
 
     static Command Decoder(std::string &buf) {
-        return Command();
+        Command reCommand;
+        std::stringstream ss;
+        ss<<buf;
+        std::string mid;
+        bool ok = false;
+        while(ss>>mid){
+            if(mid=="GET"){
+                reCommand.op = GET;
+                ss>>mid;
+                ss>>reCommand.key;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.key.append(mid);
+                    }
+                }
+                ok = true;
+                break;
+            }else if(mid=="SET"){
+                reCommand.op = SET;
+                ss>>mid;
+                ss>>reCommand.key;
+                ss>>mid;
+                ss>>reCommand.value;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.value.append(mid);
+                    }
+                }
+                ok = true;
+                break;
+            }else if(mid=="DEL"){
+                reCommand.op = DEL;
+                ss>>mid;
+                ss>>reCommand.key;
+                while(ss>>mid){
+                    if(mid[0]!='$'){
+                        mid = " " + mid;
+                        reCommand.key.append(mid);
+                    }
+                }
+                ok = true;
+                break;
+            }
+        }
+        return reCommand;
+//        return Command();
     }
 
 private:
