@@ -8,6 +8,7 @@
 #include <string>
 #include "public.h"
 #include <sstream>
+#include <string>
 
 
 
@@ -50,13 +51,13 @@ public:
         if(catego=="GET"||catego=="SET"||catego=="DEL"){
             restr += heBin(catego);
             tot++;
-            //*4\r\n$3\r\nSET\r\n$7\r\nCS06142\r\n$5\r\nCloud\r\n$9\r\nComputing\r\n
             while(ss>>mid){
                 tot++;
                 restr += heBin(mid);
             }
-            if(catego=="SET"&&tot<3){
-                return "null";
+            if(catego=="SET"){
+                if((tot<3)||(buf.find('\"')==buf.rfind('\"')))
+                    return "null";
             }
             if(catego=="GET"&&tot!=2){
                 return "null";
@@ -125,6 +126,39 @@ public:
             }
         }
         return reCommand;
+    }
+    static int StrToNum(std::string str){
+        std::stringstream ss;
+        int renum;
+        ss<<str;
+        ss>>renum;
+        return renum;
+    }
+    static bool HandleBanBao(std::string str){
+        //*4\r\n$3\r\nSET\r\n$7\r\nCS06142\r\n$5\r\nCloud\r\n$9\r\nComputing\r\n
+        std::stringstream ss;
+        std::stringstream strtonum;
+        ss<<str;
+        int tot = 0;
+        std::string mid;
+        ss>>mid;
+        if(mid[0]!='*')return false;
+        else{
+            mid.erase(mid.begin());
+            tot = StrToNum(mid);
+            int temp = 0;
+            int all = 0;
+            while(ss>>mid){
+                if(mid[0]!='$')return false;
+                mid.erase(mid.begin());
+                temp = StrToNum(mid);
+                ss>>mid;
+                if(temp==mid.size())all++;
+                else return false;
+            }
+            if(tot != all)return false;
+        }
+        return true;
     }
 
 private:

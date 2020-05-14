@@ -42,7 +42,6 @@ void clientAcceptHandler(CoServer *coServer) {
         tmpThread.detach();
     }
     LOG_F(ERROR, "should not be run here");
-
 }
 
 
@@ -64,17 +63,20 @@ void clientReadHandler(const SubClientContex& ctx) {
         buf[len] = '\0';
         LOG_F(INFO, "\n%s\n", buf);
         clientBuf.append(buf);
-        Command command = Util::Decoder(clientBuf);
+        if(Util::HandleBanBao(clientBuf)) {
+            Command command = Util::Decoder(clientBuf);
+            LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
 
-        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
+            /*
+             * 放入 blockingqueue, 让 2pc 线程处理
+             */
 
-        /*
-         * 放入 blockingqueue, 让 2pc 线程处理
-         */
-
-        if (send(clientSocket, buf, len, 0) < 0) {
-            LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-            return;
+            if (send(clientSocket, buf, len, 0) < 0) {
+                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+                return;
+            }
+        }else{
+            LOG_F(INFO,"这是半包\n");
         }
         clientBuf.clear();
     }

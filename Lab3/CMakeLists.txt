@@ -83,3 +83,11 @@ add_executable(testEncoder
 #        pthread
 #        dl
 #)
+
+# 测试半包
+############测试decoder
+add_executable(testBanbao
+        test/testBanBao.cpp
+        common/Util.h
+        common/public.h
+        )
