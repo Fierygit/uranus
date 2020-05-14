@@ -65,6 +65,8 @@ target_link_libraries(
 #######################################33333
 add_executable(testEncoder
         common/loguru.cpp
+        common/Util.h
+        common/public.h
         test/testEncoder.cpp
 )
 
