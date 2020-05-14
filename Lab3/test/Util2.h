@@ -6,7 +6,7 @@
 #define LAB3_UTIL_H
 
 #include <string>
-#include "public.h"
+#include "../common/public.h"
 #include <stdio.h>
 
 
