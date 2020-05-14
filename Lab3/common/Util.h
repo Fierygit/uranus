@@ -33,7 +33,7 @@ public:
         int len = buf.size();
         ss << len;
         ss >> restr;
-//        if(!(buf=="GET"||buf=="SET"||buf=="DEL"))
+//      if(!(buf=="GET"||buf=="SET"||buf=="DEL"))
         restr = "$" + restr;
         restr += "\r\n";
         restr += buf;
