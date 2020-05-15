@@ -99,7 +99,11 @@ void multiToMultiTest() {
 
 
 int main() {
+    LOG_F(INFO, "hello, world");
+    // 单生产者 to 单消费者
     oneToOneTest();
+
+    // 多生产者 to 多消费者
     multiToMultiTest();
     return 0;
 }

@@ -50,6 +50,7 @@ enable_testing()
 
 add_executable(testBlockingqueue
         test/testBlockingqueue.cpp
+        common/loguru.cpp
         coordinator/BoundedBlockingQueue.h)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
@@ -57,4 +58,5 @@ add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 target_link_libraries(
         testBlockingqueue
         pthread
+        dl
 )

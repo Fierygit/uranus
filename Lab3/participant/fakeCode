@@ -1,0 +1,23 @@
+
+
+init:
+	init k-v store
+	connect to server
+	receive cmds
+
+
+switch state:
+	1phase:  // 初始状态接收之后进入1phase的状态
+		return ok
+	2phase:  // 接收1phase之后, 等待2phase
+		if cmd to prepare:
+			return abort
+		if cmd to commit:  // 处理
+			switch cmds:
+				get:
+					return val[key]
+				set:
+					do set
+					return ok
+
+
