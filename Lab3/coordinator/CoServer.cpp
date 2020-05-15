@@ -10,6 +10,7 @@
 #include "clientHandler.h"
 #include "participantHandler.h"
 #include "../common/Util.h"
+#include <arpa/inet.h>
 
 //todo 放到 public 重复包含？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
 
@@ -25,14 +26,24 @@ std::string welcomeLogo = "             _  .-')     ('-.         .-') _         
 
 void CoServer::run() {
     for (;;) {
-        Command command = this->commands->get();
-
-        /*
-         *  2pc here !!!!!!!
+        /**
+         * 阻塞接受， 所有 client 的请求， 只要有请求就处理， 每次处理一个
          */
+        TaskNode taskNode = this->tastNodes->get();
+        Client client = taskNode.first;
+        Command command = taskNode.second;
+        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
+        sockaddr_in clientAddr = client.addr;
 
+        // 先假设 2pc 必定成功
+        if (true) {
+            std::string rep{"SUCCESS!"};
+            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
+                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+                return;
+            }
+        }
     }
-
 }
 
 /*
@@ -103,6 +114,10 @@ const CoServer::Clients &CoServer::getClients() const {
 
 void CoServer::addClient(Client client) const {
 
+}
+
+BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
+    return this->tastNodes;
 }
 
 

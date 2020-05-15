@@ -26,6 +26,7 @@ void getTest(BoundedBlockingQueue<int>& queueTest, int x) {
 //         定时
 //        std::this_thread::sleep_for(std::chrono::milliseconds(4));
 // 要加锁, 保证原子操作
+
         std::unique_lock<std::mutex> lck(g_mutex);
         auto get_val = queueTest.get();
         testVector.emplace_back(get_val);
