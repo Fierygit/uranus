@@ -42,10 +42,32 @@ PaServer &PaServer::init() {
 }
 
 void PaServer::run() {
+    // 创建一个新的连接，接受请求， 当有一个
+    for (;;) {
+        int addrLen, clientSocket;
+        if ((clientSocket = accept(serverSockfd, (struct sockaddr *) &serverSockfd,
+                                   reinterpret_cast<socklen_t *>(&addrLen))) < 0) {
+            // 这里出错了不能 停止服务， 会是什么错误呢？??? //todo how to deal？？？？？？？？？？？？？
+            LOG_F(ERROR, "accept error");
+            continue;
+        }
+        LOG_F(INFO, "a new client is arrive : %s", inet_ntoa(serverAddr.sin_addr));
+        this->counter++;
+        std::thread tmp{[this, clientSocket] { // 不要用引用， clientSocket 是局部变量
+            for (;;) {
+                char buf[BUFSIZ];  //数据传送的缓冲区
+                int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
+                buf[len] = '\0';
 
-    std::thread t{[]{}};
-
-    for (;;) {}
-
+                if (len <= 0) { // 如果co 挂了
+                    LOG_F(WARNING, "connection closed!!!");
+                    this->counter--;
+                }
+                std::cout << buf << std::endl;
+            }
+        }};
+        tmp.detach();
+    }
+    LOG_F(INFO, "should not run here!!!");
 }
 
