@@ -12,7 +12,8 @@ add_executable(coordinator
         coordinator/main.cpp
         coordinator/CoServer.h
         coordinator/CoServer.cpp
-        coordinator/clientHandler.cpp coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
 
 target_link_libraries(
         coordinator
@@ -25,7 +26,7 @@ target_link_libraries(
 set(CLIENT "client")
 add_executable(${CLIENT}
         common/loguru.cpp
-        client/main.cpp client/Client.h client/Client.cpp)
+        client/main.cpp client/Client.h client/Client.cpp common/WaitGroup.h)
 
 # 添加 thread   dynamic link?
 target_link_libraries(
@@ -37,12 +38,13 @@ target_link_libraries(
 # 参与者
 set(PARTICIPANT "participant")
 add_executable(${PARTICIPANT}
-        participant/main.cpp)
+        participant/main.cpp participant/PaServer.h participant/PaServer.cpp common/loguru.cpp)
 
 # 添加 thread
 target_link_libraries(
-        ${PROJECT_NAME}
+        ${PARTICIPANT}
         pthread
+        dl
 )
 
 
@@ -53,7 +55,7 @@ enable_testing()
 add_executable(testBlockingqueue
         common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp)
+        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testWaitGroup.cpp)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
 # 添加 thread
@@ -112,3 +114,21 @@ target_link_libraries(
         pthread
 )
 
+
+#################################测试 waitgroup
+add_executable(WaitGroup
+        test/testWaitGroup.cpp
+        common/WaitGroup.h)
+target_link_libraries(
+        WaitGroup
+        pthread
+)
+
+#################################测试 waitgroup
+add_executable(ThreadPool
+        test/testThreadPool.cpp
+        common/ThreadPool.cpp)
+target_link_libraries(
+        ThreadPool
+        pthread
+)

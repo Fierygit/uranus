@@ -46,6 +46,18 @@ void CoServer::run() {
     }
 }
 
+
+/**
+ * 首先先连接 所有的 pa
+ */
+
+void CoServer::initPaSrver() {
+
+
+
+}
+
+
 /*
  * 初始化的时候出错直接停止， 不算容错范围
  */
@@ -88,19 +100,13 @@ CoServer CoServer::init() {
     /*
      * 创建子线程接受新的 client 连接
      */
-    auto acceptClient = [this]() {
-        clientAcceptHandler(this);
-    };
-    std::thread acThread{acceptClient};
+    std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
 
     /*
-     * 创建子线程接受新的 pantipant 请求
-     *
+     * 同步连接 所有的 participant, 连接不到算初始话失败
      */
-    std::thread paThread{[this]() { participantHandler(this); }};
-    paThread.detach();
-
+    initPaSrver();
     return *this;
 }
 
@@ -119,6 +125,8 @@ void CoServer::addClient(Client client) const {
 BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
     return this->tastNodes;
 }
+
+
 
 
 

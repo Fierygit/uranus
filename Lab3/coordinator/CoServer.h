@@ -44,6 +44,7 @@ public:
 private:
 
     void initCoSrver();
+    void initPaSrver();
 
 public:
     CoServer init();
@@ -84,6 +85,7 @@ private:
     std::string ip;
     int serverSockfd;
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
+
 };
 
 
