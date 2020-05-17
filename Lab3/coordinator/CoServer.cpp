@@ -106,6 +106,16 @@ void CoServer::initPaSrver() {
 
 }
 
+/**
+ * 将发送数据放入线程池中， 用 waitgroup 等待， 当接受到所有的返回时， 处理返回情况
+ *
+ */
+
+void CoServer::send2PaSync() {
+
+}
+
+
 
 /*
  * 初始化的时候出错直接停止， 不算容错范围
@@ -175,6 +185,7 @@ void CoServer::addClient(Client client) const {
 BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
     return this->tastNodes;
 }
+
 
 
 

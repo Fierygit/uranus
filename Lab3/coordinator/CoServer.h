@@ -50,6 +50,8 @@ private:
 
     void initPaSrver();
 
+    void send2PaSync();
+
 public:
     CoServer init();
 
