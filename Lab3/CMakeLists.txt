@@ -45,13 +45,14 @@ target_link_libraries(
         pthread
 )
 
+
 ##############测试 "生产者消费者"
 enable_testing()
 
 add_executable(testBlockingqueue
         common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp)
+        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testTCPServer.cpp)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
 # 添加 thread
@@ -91,3 +92,21 @@ add_executable(testBanbao
         common/Util.h
         common/public.h
         )
+
+
+##################测试 TCP 连接的中断情况
+################## 测试 client
+add_executable(testTCPClient
+        test/testTCPClient.cpp)
+target_link_libraries(
+        testTCPClient
+        pthread
+)
+
+############### ####测试 server
+add_executable(testTCPServer
+        test/testTCPServer.cpp)
+target_link_libraries(
+        testTCPServer
+        pthread
+)
