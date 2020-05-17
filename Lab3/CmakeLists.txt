@@ -51,12 +51,18 @@ target_link_libraries(
 ##############测试 "生产者消费者"
 enable_testing()
 
-
 add_executable(testBlockingqueue
         common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testWaitGroup.cpp)
+        coordinator/BoundedBlockingQueue.h)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
+
+# 添加 thread
+target_link_libraries(
+        testBlockingqueue
+        pthread
+        dl
+)
 
 # 添加 thread
 target_link_libraries(
