@@ -11,6 +11,7 @@
 #include "participantHandler.h"
 #include "../common/Util.h"
 #include <arpa/inet.h>
+#include <fstream>
 
 //todo 放到 public 重复包含？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
 
@@ -45,6 +46,76 @@ void CoServer::run() {
         }
     }
 }
+
+
+/**
+ * 首先先连接 所有的 pa
+ */
+
+void CoServer::initPaSrver() {
+/*
+    // 从配置文件中读取数据， 然后去连接客户端
+    std::string filePath{R"(D:\college3\cloud_computing\uranus\Lab3\coordinator\config.conf)"};
+    std::ifstream file;
+    file.open(filePath, std::ios::in);
+
+    if (!file.is_open()) {
+        LOG_F(ERROR, "can not open file");
+        exit(1);//直接退出
+    }
+    std::string strLine;
+    while (getline(file, strLine)) {
+        if (strLine.empty())
+            continue;
+        LOG_F(INFO, "participant info: %s", strLine.c_str());
+        for (int i = 0; i < strLine.size(); i++) {
+            if (strLine[i] == ':' && i != strLine.size() - 1 && i != 0) {
+                std::string ip = strLine.substr(0, i + 1);
+                std::string port = strLine.substr(i + 1);
+                LOG_F(INFO, "split -> ip: %s  port: %d", ip.c_str(), atoi(port.c_str()));
+                this->participants.push_back(Participant(ip, atoi(port.c_str())));
+                break;
+            }
+        }
+    }
+*/
+
+ // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
+
+    for(Participant &p : this->participants){
+
+//        memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
+//
+//        remoteAddr.sin_family = AF_INET; //设置为IP通信
+//        remoteAddr.sin_addr.s_addr = inet_addr("127.0.0.1");//服务器IP地址
+//        remoteAddr.sin_port = htons(8888); //服务器端口号
+//
+//        /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
+//        if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+//            perror("socket error");
+//            exit(1);
+//        }
+//
+//        /*将套接字绑定到服务器的网络地址上*/
+//        if (connect(clientSockfd, (struct sockaddr *) &remoteAddr, sizeof(struct sockaddr)) < 0) {
+//            perror("connect error");
+//            exit(1);
+//        }
+
+    }
+
+}
+
+/**
+ * 将发送数据放入线程池中， 用 waitgroup 等待， 当接受到所有的返回时， 处理返回情况
+ *
+ */
+
+void CoServer::send2PaSync() {
+
+}
+
+
 
 /*
  * 初始化的时候出错直接停止， 不算容错范围
@@ -88,19 +159,14 @@ CoServer CoServer::init() {
     /*
      * 创建子线程接受新的 client 连接
      */
-    auto acceptClient = [this]() {
-        clientAcceptHandler(this);
-    };
-    std::thread acThread{acceptClient};
+    std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
 
     /*
-     * 创建子线程接受新的 pantipant 请求
-     *
+     * 同步连接 所有的 participant, 连接不到算初始话失败
      */
-    std::thread paThread{[this]() { participantHandler(this); }};
-    paThread.detach();
-
+    initPaSrver();
+    LOG_F(INFO,"init over");
     return *this;
 }
 
@@ -119,6 +185,9 @@ void CoServer::addClient(Client client) const {
 BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
     return this->tastNodes;
 }
+
+
+
 
 
 

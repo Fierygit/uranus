@@ -1,6 +1,7 @@
 #include <iostream>
+#include "PaServer.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    PaServer().init().run();
     return 0;
 }

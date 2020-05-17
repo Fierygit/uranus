@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <netinet/in.h>
+#include <map>
 #include "../common/public.h"
 #include "../coordinator/BoundedBlockingQueue.h"
 
@@ -25,10 +26,12 @@ struct Client {
 
 struct Participant {
 
-private:
+    std::string ip;
+    int port;
     int fd;
     bool isAlive;
 
+    Participant(std::string ip, int port) : ip(std::move(ip)), port(port) {}
 };
 
 class CoServer {
@@ -45,6 +48,10 @@ private:
 
     void initCoSrver();
 
+    void initPaSrver();
+
+    void send2PaSync();
+
 public:
     CoServer init();
 
@@ -59,7 +66,7 @@ public:
 public:
     using Clients = std::vector<Client>;
     using Participants = std::vector<Participant>;
-    using TaskNode = std::pair<Client,Command>;
+    using TaskNode = std::pair<Client, Command>;
 
 public:
     const Clients &getClients() const;
@@ -80,10 +87,12 @@ private:
  * 本服务器的信息
  */
 private:
+
     int port;
     std::string ip;
     int serverSockfd;
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
+
 };
 
 

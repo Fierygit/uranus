@@ -61,10 +61,12 @@ void Client::run() {
 
 }
 
+// 不处理出错问题
 void Client::sendToServer(std::string msg) {
 
     // 所有的 send 都要 try catch
     int len = send(clientSockfd, msg.c_str(), msg.size(), 0);
+    std::cout << len << std::endl;
     if (len != msg.size()) {
         // 错误处理！！！
         std::cout << "Error**************************" << std::endl;
@@ -75,6 +77,7 @@ void Client::sendToServer(std::string msg) {
 
     char buf[BUFSIZ];  //数据传送的缓冲区
     len = recv(clientSockfd, buf, BUFSIZ, 0);//接收服务器端信息
+    std::cout << len << std::endl;
     buf[len] = '\0';
     std::cout << buf << std::endl;
 }
