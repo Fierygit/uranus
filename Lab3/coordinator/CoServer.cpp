@@ -42,7 +42,9 @@ void CoServer::run() {
         int pc1 = 0;
         // 1、 第一阶段，提交请求命令给particitans**************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
+
         this->send2PaSync(commandStr);// 同步发送------------------------------------------------
+        LOG_F(INFO, "1 phase send over !");
         for (Participant *p : participants) {
             if (p->pc1Reply.stateCode != SUCCESS) {
                 pc1 = 1;
@@ -53,8 +55,10 @@ void CoServer::run() {
         int pc2 = 0;
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
+
+            LOG_F(INFO, "1 phase success !");
             std::string msg = Util::Encoder("SET ${key} '${commit}'");
-            std::cout << msg << std::endl;      // 测试一次
+
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
                 if (p->pc1Reply.stateCode != SUCCESS) {
@@ -86,10 +90,14 @@ void CoServer::initPaSrver() {
 
     // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
 
-    std::vector<std::thread> connParts;
-    for (Participant *p : this->participants) {
-        std::thread connPart{[this, &p] { // 不要用引用， clientSocket 是局部变量
-            struct sockaddr_in remoteAddr{}; //服务器端网络地址结构体
+    // 确保每个线程执行完
+    WaitGroup waitGroup;
+    waitGroup.Add(participants.size());
+
+    for (Participant* &p : this->participants) {
+        // 放进线程池处理
+        threadPool->addTask([this, &p, &waitGroup] { // 不要用引用， clientSocket 是局部变量
+            struct sockaddr_in remoteAddr; //服务器端网络地址结构体
             int clientSockfd;
 
             memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
@@ -114,9 +122,10 @@ void CoServer::initPaSrver() {
                 p->fd = clientSockfd;
                 p->isAlive = true;
             }
-        }};
-        connPart.detach();
+            waitGroup.Done(); // 结束喽！！！！！！
+        });
     }
+    waitGroup.Wait();
 }
 
 /**
@@ -156,6 +165,7 @@ void CoServer::send2PaSync(std::string msg) {
             }
         });
     }
+//     把下面这个注释掉就可以返回了, 否则没有返回值
     waitGroup.Wait();  //等待所有的结果
 }
 

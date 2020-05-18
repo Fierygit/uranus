@@ -22,7 +22,7 @@ Client *Client::init() {
 
     remoteAddr.sin_family = AF_INET; //设置为IP通信
     remoteAddr.sin_addr.s_addr = inet_addr("127.0.0.1");//服务器IP地址
-    remoteAddr.sin_port = htons(8888); //服务器端口号
+    remoteAddr.sin_port = htons(8001); //服务器端口号
 
     /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
     if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
