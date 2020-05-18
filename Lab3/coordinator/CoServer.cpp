@@ -44,18 +44,23 @@ void CoServer::run() {
         // 1、 第一阶段，提交请求命令给particitans**************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
         this->send2PaSync(commandStr);
+        LOG_F(INFO, "1 phase send over !");
 
 
         int pc2 = 0;
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
+            LOG_F(INFO, "1 phase success !");
             std::string tmp{"SET ${key} '${commit}'"};
             std::string msg = Util::Encoder(tmp);
             this->send2PaSync(msg);
+            LOG_F(INFO, "2 phase over !");
         } else {
+            LOG_F(INFO, "1 phase failed !");
             std::string tmp{"SET ${key} '${abort}'"};
             std::string msg = Util::Encoder(tmp);
             this->send2PaSync(msg);
+            LOG_F(INFO, "1 phase abort over !");
         }
 
 
@@ -78,37 +83,42 @@ void CoServer::initPaSrver() {
 
     // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
 
-    std::vector<std::thread> connParts;
+    // 确保每个线程执行完
+    WaitGroup waitGroup;
+    waitGroup.Add(participants.size());
+
     for (Participant* &p : this->participants) {
-            std::thread connPart{[this, &p] { // 不要用引用， clientSocket 是局部变量
-                struct sockaddr_in remoteAddr; //服务器端网络地址结构体
-                int clientSockfd;
+        // 放进线程池处理
+        threadPool->addTask([this, &p, &waitGroup] { // 不要用引用， clientSocket 是局部变量
+            struct sockaddr_in remoteAddr; //服务器端网络地址结构体
+            int clientSockfd;
 
-                memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
+            memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
 
-                remoteAddr.sin_family = AF_INET; //设置为IP通信
-                remoteAddr.sin_addr.s_addr = inet_addr(p->ip.c_str());//服务器IP地址
-                remoteAddr.sin_port = htons(p->port); //服务器端口号
+            remoteAddr.sin_family = AF_INET; //设置为IP通信
+            remoteAddr.sin_addr.s_addr = inet_addr(p->ip.c_str());//服务器IP地址
+            remoteAddr.sin_port = htons(p->port); //服务器端口号
 
-                /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
-                if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-                    perror("socket error");
-                    exit(1);
-                }
+            /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
+            if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+                perror("socket error");
+                exit(1);
+            }
 
-                /*将套接字绑定到服务器的网络地址上*/
-                if (connect(clientSockfd, (struct sockaddr *) &remoteAddr, sizeof(struct sockaddr)) < 0) {
-                    LOG_F(ERROR, "connect error... ip: %s, port: %d", p->ip.c_str(), p->port);
-                    p->fd = -1;
-                    p->isAlive = false;
-                } else {
-                    LOG_F(INFO, "connect success... ip: %s, port: %d, socket: %d", p->ip.c_str(), p->port, clientSockfd);
-                    p->fd = clientSockfd;
-                    p->isAlive = true;
-                }
-            }};
-        connPart.detach();
+            /*将套接字绑定到服务器的网络地址上*/
+            if (connect(clientSockfd, (struct sockaddr *) &remoteAddr, sizeof(struct sockaddr)) < 0) {
+                LOG_F(ERROR, "connect error... ip: %s, port: %d", p->ip.c_str(), p->port);
+                p->fd = -1;
+                p->isAlive = false;
+            } else {
+                LOG_F(INFO, "connect success... ip: %s, port: %d, socket: %d", p->ip.c_str(), p->port, clientSockfd);
+                p->fd = clientSockfd;
+                p->isAlive = true;
+            }
+            waitGroup.Done(); // 结束喽！！！！！！
+        });
     }
+    waitGroup.Wait();
 }
 
 /**
@@ -149,6 +159,7 @@ void CoServer::send2PaSync(std::string msg) {
             }
         });
     }
+//     把下面这个注释掉就可以返回了, 否则没有返回值
     waitGroup.Wait();  //等待所有的结果
 }
 

@@ -61,8 +61,10 @@ void PaServer::run() {
                 if (len <= 0) { // 如果co 挂了
                     LOG_F(WARNING, "connection closed!!!");
                     this->counter--;
+                    break;
                 }
-                std::cout << buf << std::endl;
+
+                LOG_F(INFO, "+++%s+++", buf);
             }
         }};
         tmp.detach();
