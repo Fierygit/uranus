@@ -18,6 +18,8 @@ add_executable(kvstore2pcsystem
         participant/PaServer.cpp
         common/Util.h
         common/Config.h
+        common/ThreadPool.h
+        common/ThreadPool.cpp
         )
 
 target_link_libraries(

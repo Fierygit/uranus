@@ -43,11 +43,12 @@ public:
 
     // 初始化地址就够了
     CoServer(std::string ip, int port) :
-            port(8888),
+            port(port),
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             keepAlive(new KeepAlive(3, 3)),
-            threadPool(new uranus::ThreadPool()) {}
+            threadPool(new uranus::ThreadPool(10)){
+    }
 
 
 private:
