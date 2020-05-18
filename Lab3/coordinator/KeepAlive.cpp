@@ -32,7 +32,6 @@ void KeepAlive::init(Participants &participants) {
 //  3、 p网络
 //  4、 c 断开， 等待p， p 不发 get
 void KeepAlive::keepaliveCheck(Participants &participants) {
-
     for (Participant p : participants) {
 
         Time now = std::chrono::system_clock::now();
