@@ -34,15 +34,17 @@ PaServer &PaServer::init() {
         exit(EXIT_FAILURE);
     }
 
-    LOG_F(INFO, "start to listen !!!");
+    LOG_F(INFO, "start to listen ...");
     return *this;
 }
 
 void PaServer::run() {
     // 创建一个新的连接，接受请求， 当有一个
     for (;;) {
-        int addrLen, clientSocket;
-        if ((clientSocket = accept(serverSockfd, (struct sockaddr *) &serverSockfd,
+        struct sockaddr_in clientAddr{};
+        int addrLen = sizeof(clientAddr);
+        int clientSocket;
+        if ((clientSocket = accept(serverSockfd, (struct sockaddr *) &clientAddr,
                                    reinterpret_cast<socklen_t *>(&addrLen))) < 0) {
             // 这里出错了不能 停止服务， 会是什么错误呢？??? //todo how to deal？？？？？？？？？？？？？
             LOG_F(ERROR, "accept error");
