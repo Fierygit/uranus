@@ -2,14 +2,14 @@
 // Created by Firefly on 2020/5/17.
 //
 
-#include <bits/socket.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <arpa/inet.h>
 #include <iostream>
-#include <zconf.h>
+//#include <zconf.h>
 
 using namespace std;
 
@@ -23,7 +23,11 @@ int main(){
 
     remoteAddr.sin_family = AF_INET; //设置为IP通信
     remoteAddr.sin_addr.s_addr = inet_addr("127.0.0.1");//服务器IP地址
+<<<<<<< HEAD
     remoteAddr.sin_port = htons(4567); //服务器端口号
+=======
+    remoteAddr.sin_port = htons(8004); //服务器端口号
+>>>>>>> 59fe09b37da26a94587b238e2e7663b2680fd6a0
 
     /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
     if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
@@ -50,9 +54,6 @@ int main(){
         int len = send(clientSockfd, msg.c_str(), msg.size(), 0);
         cout << len << endl;
     }
-
-
-
 
     return 0;
 }
