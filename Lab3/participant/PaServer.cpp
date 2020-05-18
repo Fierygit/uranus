@@ -58,10 +58,15 @@ void PaServer::run() {
                 int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
                 buf[len] = '\0';
 
+                std::string send_msg = "success";
+                if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                    LOG_F(ERROR, "part send error !");
+                }
+
                 if (len <= 0) { // 如果co 挂了
                     LOG_F(WARNING, "connection closed!!!");
                     this->counter--;
-                    break;
+//                    break;
                 }
 
                 LOG_F(INFO, "+++%s+++", buf);
