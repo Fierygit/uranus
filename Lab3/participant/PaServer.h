@@ -19,7 +19,7 @@
 class PaServer {
 
 public:
-    PaServer() {}
+    PaServer(): ip("127.0.0.1"), port(4567) {}
 
     PaServer(std::string ip, int port) : ip(std::move(ip)), port(port) {}
 

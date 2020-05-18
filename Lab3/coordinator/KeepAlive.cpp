@@ -25,7 +25,6 @@ void KeepAlive::init(Participants &participants) {
 // 1、 如果只是网络问题， 导致提交失败， 这里就要断了连接， 下一次再来尝试
 // 2、 这里不处理重新上线， 上线了，p发消息过来？ 还是由 这里检查？？？？
 void KeepAlive::keepaliveCheck(Participants &participants) {
-
     for (Participant p : participants) {
         Time now = std::chrono::system_clock::now();
 
