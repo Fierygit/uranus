@@ -30,5 +30,6 @@ struct Participant {
 typedef std::vector<Participant> Participants;
 //using Participants = std::vector<Participant>;
 
+using Time = decltype(std::chrono::system_clock::now());
 
 #endif //LAB3_PUBLIC_H
