@@ -42,7 +42,7 @@ void CoServer::run() {
         int pc1 = 0;
         // 1、 第一阶段，提交请求命令给particitans**************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
-        this->send2PaSync(commandStr);
+        this->send2PaSync(commandStr);// 同步发送------------------------------------------------
         for (Participant *p : participants) {
             if (p->pc1Reply.stateCode != SUCCESS) {
                 pc1 = 1;
@@ -54,7 +54,7 @@ void CoServer::run() {
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
             std::string msg = Util::Encoder0("SET ${key} '${commit}'");
-            this->send2PaSync(msg);
+            this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
                 if (p->pc1Reply.stateCode != SUCCESS) {
                     pc2 = 1;
@@ -62,8 +62,7 @@ void CoServer::run() {
                 }
             }
         } else {
-            std::string tmp{"SET ${key} '${abort}'"};
-            std::string msg = Util::Encoder(tmp);
+            std::string msg = Util::Encoder0("SET ${key} \"${abort}\"");
             this->send2PaSync(msg);
             pc2 = 1;
         }
