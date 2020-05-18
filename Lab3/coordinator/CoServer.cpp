@@ -9,11 +9,10 @@
 #include "../common/public.h"
 #include "../common/loguru.hpp"
 #include "clientHandler.h"
-#include "participantHandler.h"
 #include "../common/Util.h"
 #include "../common/WaitGroup.h"
 #include <arpa/inet.h>
-#include <fstream>
+
 
 //todo 放到 public 重复包含？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
 
@@ -43,33 +42,40 @@ void CoServer::run() {
         int pc1 = 0;
         // 1、 第一阶段，提交请求命令给particitans**************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
-        this->send2PaSync(commandStr);
-        LOG_F(INFO, "1 phase send over !");
 
+        this->send2PaSync(commandStr);// 同步发送------------------------------------------------
+        LOG_F(INFO, "1 phase send over !");
+        for (Participant *p : participants) {
+            if (p->pc1Reply.stateCode != SUCCESS) {
+                pc1 = 1;
+                break;
+            }
+        }
 
         int pc2 = 0;
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
             LOG_F(INFO, "1 phase success !");
-            std::string tmp{"SET ${key} '${commit}'"};
-            std::string msg = Util::Encoder(tmp);
-            this->send2PaSync(msg);
-            LOG_F(INFO, "2 phase over !");
+            std::string msg = Util::Encoder0("SET ${key} '${commit}'");
+            this->send2PaSync(msg);// 同步发送------------------------------------------------------
+            for (Participant *p : participants) {
+                if (p->pc1Reply.stateCode != SUCCESS) {
+                    pc2 = 1;
+                    break;
+                }
+            }
         } else {
-            LOG_F(INFO, "1 phase failed !");
-            std::string tmp{"SET ${key} '${abort}'"};
-            std::string msg = Util::Encoder(tmp);
+            std::string msg = Util::Encoder0("SET ${key} \"${abort}\"");
             this->send2PaSync(msg);
-            LOG_F(INFO, "1 phase abort over !");
+            pc2 = 1;
         }
-
-
-        std::string rep{"SUCCESS!"};
-        if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
-            LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-            return;
+        if (pc2 == 0) {
+            std::string rep{"SUCCESS!"};
+            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
+                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+                return;
+            }
         }
-
     }
 }
 
@@ -131,7 +137,7 @@ void CoServer::send2PaSync(std::string msg) {
 
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());//等待每一个 参与者的 到来
-    for (Participant* &p : participants) {
+    for (Participant *&p : participants) {
         this->threadPool->addTask([&] {//注意 cnt 是 值传递
             {// 锁的作用域
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
@@ -223,7 +229,7 @@ const CoServer::Clients &CoServer::getClients() const {
     return clients;
 }
 
-void CoServer::addClient(Client client) const {
+void CoServer::addClient(const Client &client) const {
 
 }
 
@@ -234,8 +240,8 @@ BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
 // 添加 参与者
 void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &parts) {
     for (const auto &p: parts) {
-        auto* tmp = new Participant();
-        tmp->ip = p.first,tmp->port = atoi(p.second.c_str());
+        auto *tmp = new Participant();
+        tmp->ip = p.first, tmp->port = atoi(p.second.c_str());
         LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
         this->participants.push_back(tmp);
     }
