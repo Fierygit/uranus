@@ -41,7 +41,7 @@ public:
         restr += "\r\n";
         return restr;
     }
-    static  std::string Encoder0(std::string&& buf){
+    static  std::string Encoder(std::string&& buf){
         return Encoder(buf);
     }
 
@@ -80,6 +80,10 @@ public:
             restr = "null";
         }
         return restr;
+    }
+
+    static  Command Decoder(std::string && buf){
+       return Decoder(buf);
     }
 
     static Command Decoder(std::string &buf) {
