@@ -25,11 +25,11 @@ public:
     void init(Participants& participants);
 
 private:
-    static void keepaliveCheck(Participants& participants);
+    void keepaliveCheck(Participants& participants);
 
 private:
     Munites checkInterval;   // 心跳检测间隔
-    static Munites invalidInterval; // 判定失效间隔
+    Munites invalidInterval; // 判定失效间隔
     volatile bool Finished{false};
 };
 
