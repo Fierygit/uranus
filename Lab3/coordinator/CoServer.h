@@ -76,7 +76,7 @@ public:
 public:
     const Clients &getClients() const;
 
-    void addClient(Client) const;
+    void addClient(const Client&) const;
 
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 

@@ -41,6 +41,10 @@ public:
         restr += "\r\n";
         return restr;
     }
+    static  std::string Encoder0(std::string&& buf){
+        return Encoder(buf);
+    }
+
     static std::string Encoder(std::string &buf) {
         std::stringstream ss;
         ss<<buf;
