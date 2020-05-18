@@ -10,6 +10,7 @@
 #include "clientHandler.h"
 #include "participantHandler.h"
 #include "../common/Util.h"
+#include "../common/WaitGroup.h"
 #include <arpa/inet.h>
 #include <fstream>
 
@@ -32,18 +33,42 @@ void CoServer::run() {
          */
         TaskNode taskNode = this->tastNodes->get();
         Client client = taskNode.first;
-        Command command = taskNode.second;
-        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
+        std::string commandStr = taskNode.second;
+        Command command = Util::Decoder(commandStr);
         sockaddr_in clientAddr = client.addr;
 
-        // 先假设 2pc 必定成功
-        if (true) {
-            std::string rep{"SUCCESS!"};
-            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
-                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-                return;
+        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
+
+        int pc1 = 0;
+        // 1、 第一阶段，提交请求命令给particitans
+        // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
+        std::vector<RequestReply> replys = this->send2PaSync(commandStr);
+
+        for (RequestReply &r : replys) {
+            if (r.stateCode != SUCCESS) {
+                pc1 = 1;   // 状态机改变
+                break;
             }
         }
+        int pc2 = 0;
+        //2、 第二阶段
+        if (pc1 == 0) {
+            std::string tmp{"SET ${key} '${commit}'"};
+            std::string msg = Util::Encoder(tmp);
+            this->send2PaSync(msg);
+        }else {
+            std::string tmp{"SET ${key} '${abort}'"};
+            std::string msg = Util::Encoder(tmp);
+            this->send2PaSync(msg);
+        }
+
+
+        std::string rep{"SUCCESS!"};
+        if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
+            LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+            return;
+        }
+
     }
 }
 
@@ -85,8 +110,20 @@ void CoServer::initPaSrver() {
  *
  */
 
-void CoServer::send2PaSync() {
+// 发消息，返回的结果
+std::vector<RequestReply> CoServer::send2PaSync(std::string msg) {
+    std::vector<RequestReply> ret(participants.size());
+    int cnt = 0; //第几个参与者
+    WaitGroup waitGroup;
+    waitGroup.Add(participants.size());//等待每一个 参与者的 到来
+    for (Participant &p : participants) {
+        this->threadPool->addTask([cnt, &msg, &p, &waitGroup] {//注意 cnt 是 值传递
 
+        });
+        cnt++;
+    }
+    waitGroup.Wait();  //等待所有的结果
+    return ret;
 }
 
 
