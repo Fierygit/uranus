@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/participant.dir/participant/main.cpp.o CMakeFiles/participant.dir/participant/PaServer.cpp.o CMakeFiles/participant.dir/common/loguru.cpp.o  -o participant -lpthread -ldl 

@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/client.dir/common/loguru.cpp.o CMakeFiles/client.dir/client/main.cpp.o CMakeFiles/client.dir/client/Client.cpp.o  -o client -lpthread -ldl 

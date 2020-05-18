@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/testBanbao.dir/test/testBanBao.cpp.o  -o testBanbao 

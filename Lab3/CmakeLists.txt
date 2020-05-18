@@ -3,7 +3,25 @@ project(Lab3)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Lab3 main.cpp)
+add_executable(kvstore2pcsystem
+        main.cpp
+        common/loguru.cpp
+        coordinator/CoServer.h
+        coordinator/CoServer.cpp
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h
+        coordinator/participantHandler.h
+        coordinator/participantHandler.cpp
+        participant/PaServer.h
+        participant/PaServer.cpp
+        common/Util.h
+        )
+
+target_link_libraries(
+        kvstore2pcsystem
+        pthread
+        dl
+)
 
 
 # 协调者##########################333
@@ -51,18 +69,12 @@ target_link_libraries(
 ##############测试 "生产者消费者"
 enable_testing()
 
+
 add_executable(testBlockingqueue
         common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h)
+        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testWaitGroup.cpp)
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
-
-# 添加 thread
-target_link_libraries(
-        testBlockingqueue
-        pthread
-        dl
-)
 
 # 添加 thread
 target_link_libraries(
@@ -80,7 +92,7 @@ add_executable(testDecoder
 
 #######################################测试encoder
 add_executable(testEncoder
-#        common/loguru.cpp
+        #        common/loguru.cpp
         test/testEncoder.cpp
         common/Util.h
         )
@@ -137,4 +149,19 @@ add_executable(ThreadPool
 target_link_libraries(
         ThreadPool
         pthread
+)
+
+### tse
+add_executable(Test
+        test.cpp
+        common/loguru.cpp
+        coordinator/CoServer.h
+        coordinator/CoServer.cpp
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
+
+target_link_libraries(
+        Test
+        pthread
+        dl
 )
