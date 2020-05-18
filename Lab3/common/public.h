@@ -17,7 +17,18 @@ struct Command {
     std::string value;
 };
 
+struct Participant {
 
+    std::string ip;
+    int port;
+    int fd;
+    bool isAlive;
+
+    Participant(std::string ip, int port) : ip(std::move(ip)), port(port) {}
+};
+
+typedef std::vector<Participant> Participants;
+//using Participants = std::vector<Participant>;
 
 
 #endif //LAB3_PUBLIC_H

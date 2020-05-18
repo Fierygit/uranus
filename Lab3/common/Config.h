@@ -51,6 +51,11 @@ void Config::parse(const std::string& file_path) {
     std::ifstream ifile;
     ifile.open(file_path, std::ios::in);
 
+    if(!ifile.is_open()){
+        LOG_F(ERROR,"config can not open!!!");
+        exit(1);
+    }
+
     std::string line;
     while (getline(ifile, line)) {
         if (line.size() == 0 || line[0] == '!') continue;

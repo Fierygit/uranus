@@ -12,6 +12,7 @@
 #include <map>
 #include "../common/public.h"
 #include "../coordinator/BoundedBlockingQueue.h"
+#include "KeepAlive.h"
 
 /*
  * 连接的用户
@@ -24,15 +25,9 @@ struct Client {
     std::string buf;
 };
 
-struct Participant {
 
-    std::string ip;
-    int port;
-    int fd;
-    bool isAlive;
 
-    Participant(std::string ip, int port) : ip(std::move(ip)), port(port) {}
-};
+
 
 class CoServer {
 
@@ -42,7 +37,11 @@ public:
 
     // 初始化地址就够了
     CoServer(std::string ip, int port) :
-            port(8888), ip(std::move(ip)), tastNodes(new BoundedBlockingQueue<TaskNode>()) {}
+            port(8888),
+            ip(std::move(ip)),
+            tastNodes(new BoundedBlockingQueue<TaskNode>()),
+            keepAlive(new KeepAlive(3, 3)) {}
+
 
 private:
 
@@ -52,10 +51,12 @@ private:
 
     void send2PaSync();
 
+
 public:
     CoServer init();
+
     // 设置参与者
-    void setParticipant(std::vector<std::pair<std::string, std::string>>&);
+    void setParticipant(std::vector<std::pair<std::string, std::string>> &);
 
     void run();
 
@@ -67,7 +68,6 @@ public:
 
 public:
     using Clients = std::vector<Client>;
-    using Participants = std::vector<Participant>;
     using TaskNode = std::pair<Client, Command>;
 
 public:
@@ -75,15 +75,20 @@ public:
 
     void addClient(Client) const;
 
+    BoundedBlockingQueue<TaskNode> *getTastNodes() const;
+
 private:
     //把并行的强行转为 串行， 最多等待 n 个任务， 当大于时， 停止服务 important
     BoundedBlockingQueue<TaskNode> *tastNodes;
-public:
-    BoundedBlockingQueue<TaskNode> *getTastNodes() const;
+
+    // 心跳检测
+    KeepAlive *keepAlive;
+
 
 private:
     Clients clients;
     Participants participants;
+
 
 /*
  * 本服务器的信息
@@ -94,6 +99,7 @@ private:
     std::string ip;
     int serverSockfd;
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
+
 
 };
 

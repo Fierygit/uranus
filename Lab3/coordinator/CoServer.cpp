@@ -53,36 +53,10 @@ void CoServer::run() {
  */
 
 void CoServer::initPaSrver() {
-/*
-    // 从配置文件中读取数据， 然后去连接客户端
-    std::string filePath{R"(D:\college3\cloud_computing\uranus\Lab3\coordinator\config.conf)"};
-    std::ifstream file;
-    file.open(filePath, std::ios::in);
 
-    if (!file.is_open()) {
-        LOG_F(ERROR, "can not open file");
-        exit(1);//直接退出
-    }
-    std::string strLine;
-    while (getline(file, strLine)) {
-        if (strLine.empty())
-            continue;
-        LOG_F(INFO, "participant info: %s", strLine.c_str());
-        for (int i = 0; i < strLine.size(); i++) {
-            if (strLine[i] == ':' && i != strLine.size() - 1 && i != 0) {
-                std::string ip = strLine.substr(0, i + 1);
-                std::string port = strLine.substr(i + 1);
-                LOG_F(INFO, "split -> ip: %s  port: %d", ip.c_str(), atoi(port.c_str()));
-                this->participants.push_back(Participant(ip, atoi(port.c_str())));
-                break;
-            }
-        }
-    }
-*/
+    // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
 
- // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
-
-    for(Participant &p : this->participants){
+    for (Participant &p : this->participants) {
 
 //        memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
 //
@@ -116,13 +90,12 @@ void CoServer::send2PaSync() {
 }
 
 
-
 /*
  * 初始化的时候出错直接停止， 不算容错范围
  */
 
 void CoServer::initCoSrver() {
-    LOG_F(INFO, ":ip %s, port: %d", ip.c_str(), port);
+    LOG_F(INFO, ":ip: %s, port: %d", ip.c_str(), port);
 
     serverAddr.sin_family = PF_INET;    //设置为IP通信
     serverAddr.sin_port = htons(port);
@@ -152,21 +125,19 @@ void CoServer::initCoSrver() {
 
 CoServer CoServer::init() {
     //欢迎logo
-    std::cout << welcomeLogo << std::endl;
+    //std::cout << welcomeLogo << std::endl;
 
     initCoSrver();
 
-    /*
-     * 创建子线程接受新的 client 连接
-     */
+    // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
 
-    /*
-     * 同步连接 所有的 participant, 连接不到算初始话失败
-     */
+    // 同步连接 所有的 participant,
     initPaSrver();
-    LOG_F(INFO,"init over");
+
+
+    LOG_F(INFO, "init over");
     return *this;
 }
 
@@ -187,11 +158,12 @@ BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
 }
 
 // 添加 参与者
-void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>>& parts) {
-    for (const auto& p: parts) {
+void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &parts) {
+    for (const auto &p: parts) {
         Participant tmpPart(p.first, atoi(p.second.c_str()));
         LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
         this->participants.emplace_back(tmpPart);
     }
-    return;
 }
+
+
