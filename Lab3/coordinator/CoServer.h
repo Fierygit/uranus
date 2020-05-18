@@ -13,6 +13,7 @@
 #include "../common/public.h"
 #include "../coordinator/BoundedBlockingQueue.h"
 #include "KeepAlive.h"
+#include "../common/ThreadPool.h"
 
 /*
  * 连接的用户
@@ -25,8 +26,13 @@ struct Client {
     std::string buf;
 };
 
+const int SUCCESS = 0;
+const int CON_ERROR = 1;
 
-
+struct RequestReply {
+    int stateCode;
+    std::string info;
+};
 
 
 class CoServer {
@@ -40,7 +46,8 @@ public:
             port(8888),
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
-            keepAlive(new KeepAlive(3, 3)) {}
+            keepAlive(new KeepAlive(3, 3)),
+            threadPool(new uranus::ThreadPool()) {}
 
 
 private:
@@ -49,7 +56,7 @@ private:
 
     void initPaSrver();
 
-    void send2PaSync();
+    std::vector<RequestReply> send2PaSync(std::string msg);
 
 
 public:
@@ -68,7 +75,7 @@ public:
 
 public:
     using Clients = std::vector<Client>;
-    using TaskNode = std::pair<Client, Command>;
+    using TaskNode = std::pair<Client, std::string>;
 
 public:
     const Clients &getClients() const;
@@ -83,6 +90,9 @@ private:
 
     // 心跳检测
     KeepAlive *keepAlive;
+
+    // 用于发送信息的，线程池
+    uranus::ThreadPool *threadPool;
 
 
 private:
