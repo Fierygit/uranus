@@ -55,17 +55,18 @@ void CoServer::run() {
         int pc2 = 0;
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
+
             LOG_F(INFO, "1 phase success !");
-            std::string msg = Util::Encoder0("SET ${key} '${commit}'");
+            std::string msg = Util::Encoder("SET ${key} '${commit}'");
+
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
                 if (p->pc1Reply.stateCode != SUCCESS) {
                     pc2 = 1;
-                    break;
                 }
             }
         } else {
-            std::string msg = Util::Encoder0("SET ${key} \"${abort}\"");
+            std::string msg = Util::Encoder("SET ${key} \"${abort}\"");
             this->send2PaSync(msg);
             pc2 = 1;
         }
@@ -138,8 +139,8 @@ void CoServer::send2PaSync(std::string msg) {
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
-        this->threadPool->addTask([&] { //注意 cnt 是 值传递
-            {// 锁的作用域
+        this->threadPool->addTask([&] {//
+            {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
                 if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
@@ -151,13 +152,12 @@ void CoServer::send2PaSync(std::string msg) {
                     int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
                     buf[len] = '\0';
                     if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "connection closed!!!");
+                        LOG_F(WARNING, "participant %d connection closed!!!",p->port);
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
 
-                    std::string reply{buf};
-                    Command command = Util::Decoder(reply);
+                    Command command = Util::Decoder(buf);
                     LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
                           command.op, command.key.c_str(), command.value.c_str());
                 }
