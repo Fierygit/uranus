@@ -14,22 +14,24 @@ public:
     std::vector<std::pair<std::string, std::string>> others;
 
     // 解析配置文件
-    void parse(std::string file_path);
+    void parse(const std::string& file_path);
+
     // 解析命令行参数
-    void parse_arg(int argc, char *argv[], std::string& file_path);
+    static void parse_arg(int argc, char *argv[], std::string &file_path);
+
     // 分割字符
-    std::vector<std::string> split(const std::string& str, const std::string delim);
+    static std::vector<std::string> split(const std::string &str, const std::string &delim);
 
 };
 
 // 参数解析
-void Config::parse_arg(int argc, char *argv[], std::string& file_path) {
+void Config::parse_arg(int argc, char *argv[], std::string &file_path) {
     // 长短参数解析
     const char *optstring = "c:";
     int c;
     struct option opts[] = {
-            {"config_path", 1, NULL, 'c'}};
-    while ((c = getopt_long(argc, argv, optstring, opts, NULL)) != -1) {
+            {"config_path", 1, nullptr, 'c'}};
+    while ((c = getopt_long(argc, argv, optstring, opts, nullptr)) != -1) {
         switch (c) {
             case 'c':
                 file_path = optarg;
@@ -45,20 +47,20 @@ void Config::parse_arg(int argc, char *argv[], std::string& file_path) {
 }
 
 // 解析配置文件
-void Config::parse(std::string file_path) {
+void Config::parse(const std::string& file_path) {
     std::ifstream ifile;
     ifile.open(file_path, std::ios::in);
 
     std::string line;
     while (getline(ifile, line)) {
         if (line.size() == 0 || line[0] == '!') continue;
-        LOG_F(INFO, line.c_str());
-        std::vector<std::string> res = this->split(line, " ");
+        LOG_F(INFO, "%s", line.c_str());
+        std::vector<std::string> res = Config::split(line, " ");
         if (res.size() != 2) {
             continue;
         }
         if (res[0] == "mode") {
-            std::string tmp = "";
+            std::string tmp;
             for (int i = 0; i < 11; i++) {
                 tmp += res[1][i];
             }
@@ -71,14 +73,14 @@ void Config::parse(std::string file_path) {
                 this->isCoordinator = false;
             }
         } else {
-            std::vector<std::string> ip_port = this->split(res[1], ":");
+            std::vector<std::string> ip_port = Config::split(res[1], ":");
             if ((this->isCoordinator && res[0] == "coordinator_info") ||
                 (!this->isCoordinator && res[0] == "participant_info")) {
                 self = make_pair(ip_port[0], ip_port[1]);
             } else if ((!this->isCoordinator && res[0] == "coordinator_info") ||
                        (this->isCoordinator && res[0] == "participant_info")) {
                 // 去除后面的换行符
-                std::string tmp = "";
+                std::string tmp;
                 for (auto ch: ip_port[1]) {
                     if (ch >= '0' && ch <= '9') {
                         tmp += ch;
@@ -96,16 +98,15 @@ void Config::parse(std::string file_path) {
 }
 
 // 以 delim 分割 str
-std::vector<std::string> Config::split(const std::string& str, const std::string delim) {
+std::vector<std::string> Config::split(const std::string &str, const std::string &delim) {
     std::vector<std::string> tokens;
     size_t prev = 0, pos = 0;
     do {
         pos = str.find(delim, prev);
         if (pos == std::string::npos) pos = str.length();
-        std::string token = str.substr(prev, pos-prev);
+        std::string token = str.substr(prev, pos - prev);
         if (!token.empty()) tokens.push_back(token);
         prev = pos + delim.length();
-    }
-    while (pos < str.length() && prev < str.length());
+    } while (pos < str.length() && prev < str.length());
     return tokens;
 }

@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     if (conf.isCoordinator) {
         LOG_F(INFO, "RUNNING Coordinator");
         // 协调者
-        CoServer *coServer = new CoServer(conf.self.first, atoi(conf.self.second.c_str()));
+        auto *coServer = new CoServer(conf.self.first, atoi(conf.self.second.c_str()));
         // 设置参与者
         coServer->setParticipant(conf.others);
         // 开始运行
@@ -29,8 +29,8 @@ int main(int argc, char *argv[]) {
     } else {
         LOG_F(INFO, "RUNNING Participant");
         // 参与者
-        PaServer *paServer = new PaServer(conf.self.first, atoi(conf.self.second.c_str()));
-        LOG_F(INFO, std::to_string(conf.others.size()).c_str());
+        auto *paServer = new PaServer(conf.self.first, atoi(conf.self.second.c_str()));
+        LOG_F(INFO, "%s", std::to_string(conf.others.size()).c_str());
         // 设置它的协调者
         paServer->setCoordinator(conf.others[0].first, atoi(conf.others[0].second.c_str()));
         // 运行参与者
