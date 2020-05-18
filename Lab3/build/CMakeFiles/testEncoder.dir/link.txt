@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/testEncoder.dir/test/testEncoder.cpp.o  -o testEncoder 

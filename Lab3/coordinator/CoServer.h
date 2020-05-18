@@ -54,6 +54,8 @@ private:
 
 public:
     CoServer init();
+    // 设置参与者
+    void setParticipant(std::vector<std::pair<std::string, std::string>>&);
 
     void run();
 

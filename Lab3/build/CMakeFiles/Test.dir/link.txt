@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/Test.dir/test.cpp.o CMakeFiles/Test.dir/common/loguru.cpp.o CMakeFiles/Test.dir/coordinator/CoServer.cpp.o CMakeFiles/Test.dir/coordinator/clientHandler.cpp.o CMakeFiles/Test.dir/coordinator/participantHandler.cpp.o  -o Test -lpthread -ldl 

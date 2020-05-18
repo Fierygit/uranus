@@ -15,6 +15,7 @@ add_executable(kvstore2pcsystem
         participant/PaServer.h
         participant/PaServer.cpp
         common/Util.h
+        common/Config.h
         )
 
 target_link_libraries(

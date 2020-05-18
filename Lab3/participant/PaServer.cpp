@@ -9,9 +9,6 @@
 #include <thread>
 
 PaServer &PaServer::init() {
-    std::cout << "请输入端口号: \n";
-    std::cin >> port;
-
     LOG_F(INFO, ":ip %s, port: %d", ip.c_str(), port);
 
     serverAddr.sin_family = PF_INET;    //设置为IP通信
@@ -69,5 +66,11 @@ void PaServer::run() {
         tmp.detach();
     }
     LOG_F(INFO, "should not run here!!!");
+}
+
+// 设置该参与者所属协调者, 但其实不用设置? 因为它只需要等待协调者跟它连接, 他不主动连接
+void PaServer::setCoordinator(std::string ip, int port) {
+    // 不需要设置
+    return;
 }
 

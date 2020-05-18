@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/WaitGroup.dir/test/testWaitGroup.cpp.o  -o WaitGroup -lpthread 

@@ -186,8 +186,12 @@ BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
     return this->tastNodes;
 }
 
-
-
-
-
-
+// 添加 参与者
+void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>>& parts) {
+    for (const auto& p: parts) {
+        Participant tmpPart(p.first, atoi(p.second.c_str()));
+        LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
+        this->participants.emplace_back(tmpPart);
+    }
+    return;
+}

@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/coordinator.dir/common/loguru.cpp.o CMakeFiles/coordinator.dir/coordinator/main.cpp.o CMakeFiles/coordinator.dir/coordinator/CoServer.cpp.o CMakeFiles/coordinator.dir/coordinator/clientHandler.cpp.o CMakeFiles/coordinator.dir/coordinator/participantHandler.cpp.o  -o coordinator -lpthread -ldl 

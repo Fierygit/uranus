@@ -19,11 +19,12 @@
 class PaServer {
 
 public:
-    PaServer() : PaServer("localhost") {}
+    PaServer() {}
 
-    PaServer(std::string ip) : ip(std::move(ip)) {}
+    PaServer(std::string ip, int port) : ip(std::move(ip)), port(port) {}
 
     PaServer &init();
+    void setCoordinator(std::string ip, int port);
 
     void run();
 
