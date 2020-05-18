@@ -64,7 +64,8 @@ void clientReadHandler(const SubClientContex &ctx) {
     /*接收客户端的数据并将其发送给客户端--recv返回接收到的字节数，send返回发送的字节数*/
     while ((len = recv(clientSocket, buf, BUFSIZ, 0)) > 0) {
         buf[len] = '\0';
-        LOG_F(INFO, "\n%s", buf);
+
+        LOG_F(INFO, "%s", Util::outputProtocol(buf).c_str());
         clientBuf.append(buf);
         if (Util::HandleBanBao(clientBuf)) {
             //Command command = Util::Decoder(clientBuf);

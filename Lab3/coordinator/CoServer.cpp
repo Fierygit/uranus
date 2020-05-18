@@ -139,8 +139,8 @@ void CoServer::send2PaSync(std::string msg) {
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
-        this->threadPool->addTask([&] {//注意 cnt 是 值传递
-            {// 锁的作用域
+        this->threadPool->addTask([&] {//
+            {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
                 if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
