@@ -2,7 +2,7 @@
 // Created by Firefly on 2020/5/10.
 //
 
-#include <syslog.h>
+
 #include <thread>
 #include <cstring>
 #include "CoServer.h"
@@ -41,23 +41,18 @@ void CoServer::run() {
         LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
 
         int pc1 = 0;
-        // 1、 第一阶段，提交请求命令给particitans
+        // 1、 第一阶段，提交请求命令给particitans**************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
-        std::vector<RequestReply> replys = this->send2PaSync(commandStr);
+        this->send2PaSync(commandStr);
 
-        for (RequestReply &r : replys) {
-            if (r.stateCode != SUCCESS) {
-                pc1 = 1;   // 状态机改变
-                break;
-            }
-        }
+
         int pc2 = 0;
-        //2、 第二阶段
+        //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
             std::string tmp{"SET ${key} '${commit}'"};
             std::string msg = Util::Encoder(tmp);
             this->send2PaSync(msg);
-        }else {
+        } else {
             std::string tmp{"SET ${key} '${abort}'"};
             std::string msg = Util::Encoder(tmp);
             this->send2PaSync(msg);
@@ -82,15 +77,15 @@ void CoServer::initPaSrver() {
 
     // 上面已经连接好了所有的 连接， 这里尝试去连接多有的 participant, 连接好后，所有都保存在这里
 
-    for (Participant &p : this->participants) {
+    for (Participant* &p : this->participants) {
         struct sockaddr_in remoteAddr; //服务器端网络地址结构体
         int clientSockfd;
 
         memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
 
         remoteAddr.sin_family = AF_INET; //设置为IP通信
-        remoteAddr.sin_addr.s_addr = inet_addr(p.ip.c_str());//服务器IP地址
-        remoteAddr.sin_port = htons(p.port); //服务器端口号
+        remoteAddr.sin_addr.s_addr = inet_addr(p->ip.c_str());//服务器IP地址
+        remoteAddr.sin_port = htons(p->port); //服务器端口号
 
         /*创建客户端套接字--IPv4协议，面向连接通信，TCP协议*/
         if ((clientSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
@@ -100,13 +95,13 @@ void CoServer::initPaSrver() {
 
         /*将套接字绑定到服务器的网络地址上*/
         if (connect(clientSockfd, (struct sockaddr *) &remoteAddr, sizeof(struct sockaddr)) < 0) {
-            LOG_F(ERROR, "connect error... ip: %s, port: %d", p.ip.c_str(), p.port);
-            p.fd = -1;
-            p.isAlive = false;
+            LOG_F(ERROR, "connect error... ip: %s, port: %d", p->ip.c_str(), p->port);
+            p->fd = -1;
+            p->isAlive = false;
         } else {
-            LOG_F(INFO, "connect success... ip: %s, port: %d, socket: %d", p.ip.c_str(), p.port, clientSockfd);
-            p.fd = clientSockfd;
-            p.isAlive = true;
+            LOG_F(INFO, "connect success... ip: %s, port: %d, socket: %d", p->ip.c_str(), p->port, clientSockfd);
+            p->fd = clientSockfd;
+            p->isAlive = true;
         }
     }
 
@@ -118,19 +113,39 @@ void CoServer::initPaSrver() {
  */
 
 // 发消息，返回的结果
-std::vector<RequestReply> CoServer::send2PaSync(std::string msg) {
-    std::vector<RequestReply> ret(participants.size());
-    int cnt = 0; //第几个参与者
+void CoServer::send2PaSync(std::string msg) {
+
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());//等待每一个 参与者的 到来
-    for (Participant &p : participants) {
-        this->threadPool->addTask([cnt, &msg, &p, &waitGroup] {//注意 cnt 是 值传递
-
+    for (Participant* &p : participants) {
+        this->threadPool->addTask([&] {//注意 cnt 是 值传递
+            {// 锁的作用域
+                p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
+                std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
+                if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
+                    p->pc1Reply.stateCode = 2; //发送失败
+                    LOG_F(WARNING, "participant %d send error!!!", p->port);
+                    goto end;
+                } else {            //发送完等待接受
+                    char buf[BUFSIZ];  //数据传送的缓冲区
+                    int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+                    buf[len] = '\0';
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "connection closed!!!");
+                        p->pc1Reply.stateCode = 1; //接受挂了
+                        goto end;
+                    }
+                    std::string reply{buf};
+                    Command command = Util::Decoder(reply);
+                    LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                          command.op, command.key.c_str(), command.value.c_str());
+                }
+                end:;// 释放锁
+                waitGroup.Done(); // 结束喽！！！！！！
+            }
         });
-        cnt++;
     }
     waitGroup.Wait();  //等待所有的结果
-    return ret;
 }
 
 
@@ -204,8 +219,9 @@ BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
 // 添加 参与者
 void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &parts) {
     for (const auto &p: parts) {
-        Participant tmpPart(p.first, atoi(p.second.c_str()));
+        auto* tmp = new Participant();
+        tmp->ip = p.first,tmp->port = atoi(p.second.c_str());
         LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
-        this->participants.emplace_back(tmpPart);
+        this->participants.push_back(tmp);
     }
 }

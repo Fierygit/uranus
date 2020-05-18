@@ -37,7 +37,8 @@ add_executable(coordinator
         coordinator/clientHandler.h
         coordinator/participantHandler.h
         coordinator/participantHandler.cpp
-        common/Util.h coordinator/KeepAlive.cpp coordinator/KeepAlive.h)
+        common/Util.h coordinator/KeepAlive.cpp coordinator/KeepAlive.h
+        common/ThreadPool.cpp)
 
 target_link_libraries(
         coordinator
@@ -158,16 +159,16 @@ target_link_libraries(
 )
 
 ### tse
-add_executable(Test
-        test.cpp
-        common/loguru.cpp
-        coordinator/CoServer.h
-        coordinator/CoServer.cpp
-        coordinator/clientHandler.cpp
-        coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
-
-target_link_libraries(
-        Test
-        pthread
-        dl
-)
+#add_executable(Test
+#        test.cpp
+#        common/loguru.cpp
+#        coordinator/CoServer.h
+#        coordinator/CoServer.cpp
+#        coordinator/clientHandler.cpp
+#        coordinator/clientHandler.h coordinator/participantHandler.h coordinator/participantHandler.cpp common/Util.h)
+#
+#target_link_libraries(
+#        Test
+#        pthread
+#        dl
+#)

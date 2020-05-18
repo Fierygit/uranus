@@ -6,6 +6,8 @@
 #define LAB3_PUBLIC_H
 
 #include <chrono>
+#include <vector>
+#include <mutex>
 
 enum OP {
     GET, SET, DEL
@@ -19,17 +21,28 @@ struct Command {
     std::string value;
 };
 
-struct Participant {
 
+// for participant
+const int SUCCESS = 0;
+const int CON_ERROR = 1;
+
+struct RequestReply {
+    int stateCode;
+    std::string info;
+};
+
+// 用应用传递, 只能有一个地方使用 fd
+struct Participant {
+    std::mutex lock;
     std::string ip;
     int port;
     int fd;
     bool isAlive;
-
-    Participant(std::string ip, int port) : ip(std::move(ip)), port(port) {}
+    RequestReply pc1Reply{0, ""};
+    RequestReply pc2Reply{0, ""};
 };
 
-typedef std::vector<Participant> Participants;
+typedef std::vector<Participant *> Participants;
 //using Participants = std::vector<Participant>;
 
 using Time = decltype(std::chrono::system_clock::now());

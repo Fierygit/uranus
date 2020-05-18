@@ -26,13 +26,6 @@ struct Client {
     std::string buf;
 };
 
-const int SUCCESS = 0;
-const int CON_ERROR = 1;
-
-struct RequestReply {
-    int stateCode;
-    std::string info;
-};
 
 
 class CoServer {
@@ -47,7 +40,7 @@ public:
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             keepAlive(new KeepAlive(3, 3)),
-            threadPool(new uranus::ThreadPool()) {}
+            threadPool(new uranus::ThreadPool(3)) {}
 
 
 private:
@@ -56,7 +49,7 @@ private:
 
     void initPaSrver();
 
-    std::vector<RequestReply> send2PaSync(std::string msg);
+    void send2PaSync(std::string msg);
 
 
 public:
