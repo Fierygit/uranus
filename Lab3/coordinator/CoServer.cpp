@@ -45,6 +45,12 @@ void CoServer::run() {
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
         this->send2PaSync(commandStr);
 
+        for(Participant* &p : participants){
+            if(p->pc1Reply.stateCode != SUCCESS){
+                pc1 = 1;
+                break;
+            }
+        }
 
         int pc2 = 0;
         //2、 第二阶段*****************************************************************************
