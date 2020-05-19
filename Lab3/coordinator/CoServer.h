@@ -15,6 +15,7 @@
 #include "../coordinator/BoundedBlockingQueue.h"
 #include "KeepAlive.h"
 #include "../common/ThreadPool.h"
+#include "../common/WaitGroup.h"
 
 /*
  * 连接的用户
@@ -50,6 +51,8 @@ private:
 
     void initPaSrver();
 
+    int getAliveCnt();
+
     void send2PaSync(std::string msg);
 
 
@@ -62,6 +65,8 @@ public:
     void run();
 
     int getServerSockfd() const;
+    void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
+    void test1(Participant *p);
 
 /*
  * 系统信息
