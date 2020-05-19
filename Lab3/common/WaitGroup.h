@@ -13,6 +13,7 @@ class WaitGroup {
 public:
     void Add(int incr = 1) {
         counter += incr;
+        LOG_F(INFO,"WaitGroup num : %d ", incr);
     }
 
     void Done() {
@@ -24,6 +25,7 @@ public:
     void Wait() {
         std::unique_lock<std::mutex> lock(mutex);
         cond.wait(lock, [&] { return counter <= 0; });
+        LOG_F(INFO,"WaitGroup over ");
     }
 
 private:

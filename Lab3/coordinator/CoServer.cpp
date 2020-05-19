@@ -50,7 +50,7 @@ void CoServer::run() {
 
             LOG_F(INFO, "1 phase success ! start to 2 phase");
             std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
-            LOG_F(INFO, "2 phase msg: %s", msg.c_str());
+            LOG_F(INFO, "2 phase msg: %s",  Util::outputProtocol(msg).c_str());
 
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
@@ -158,7 +158,7 @@ void CoServer::send2PaSync(std::string msg) {
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
-                    LOG_F(INFO, "receive: %s", buf);
+                    LOG_F(INFO, "receive: %s", Util::outputProtocol(buf).c_str());
                     Command command = Util::Decoder(buf);
                     LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
                           command.op, command.key.c_str(), command.value.c_str());

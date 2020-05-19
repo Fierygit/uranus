@@ -22,11 +22,15 @@ public:
     }
 
     static std::string outputProtocol(std::string &&str) {
+        return outputProtocol(str);
+    }
+
+    static std::string outputProtocol(std::string &str) {
         std::string ret;
         for (char &c : str) {
-            if( c != '\n' && c != '\n'){
-                ret.push_back(c);
-            }else ret.push_back('*');
+            if (c == '\r') ret += " <-";
+            else if (c == '\n') ret += "-> ";
+            else ret.push_back(c);
         }
         return ret;
     }
