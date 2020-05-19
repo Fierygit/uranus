@@ -37,7 +37,7 @@ void CoServer::run() {
         this->send2PaSync(commandStr);// 同步发送------------------------------------------------
         LOG_F(INFO, "1 phase send over !");
         for (Participant *p : participants) {
-            if (p->isAlive == false) continue;
+            if (!p->isAlive) continue;
             if (p->pc1Reply.stateCode != SUCCESS) {
                 pc1 = 1;
                 break;
@@ -140,7 +140,7 @@ void CoServer::send2PaSync(std::string msg) {
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
         if (p->isAlive == false) continue;
-        this->threadPool->addTask([&] {//
+        this->threadPool->addTask([&] {
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
