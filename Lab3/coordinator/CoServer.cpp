@@ -49,8 +49,7 @@ void CoServer::run() {
         if (pc1 == 0) {
 
             LOG_F(INFO, "1 phase success ! start to 2 phase");
-            // TODO: 编码有问题
-            std::string msg = Util::Encoder("SET key 'commit'");
+            std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
             LOG_F(INFO, "2 phase msg: %s", msg.c_str());
 
             this->send2PaSync(msg);// 同步发送------------------------------------------------------

@@ -9,6 +9,7 @@
 #include <utility>
 #include <netinet/in.h>
 #include <atomic>
+#include <map>
 
 /**
  * 设计思路：
@@ -36,7 +37,7 @@ private:
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
 
     std::atomic<int> counter{0}; // 记录有多少个 co 连接了， 理论只有一个 co
-    map<string, string> KVDB;  // 键值数据库
+    std::map<std::string, std::string> KVDB;  // 键值数据库
 
 };
 

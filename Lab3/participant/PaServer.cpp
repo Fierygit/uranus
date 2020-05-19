@@ -4,9 +4,19 @@
 
 #include "PaServer.h"
 #include "../common/loguru.hpp"
+#include "../common/Util.h"
+#include "../common/public.h"
 #include <arpa/inet.h>
 #include <iostream>
 #include <thread>
+
+/* NOTE:
+ * 协议: 协调者返回的数据格式
+ * 对于1p, 协调者返回SET STATUS "0" / "1" 代表 1phase 成功或失败
+ * 对于2p, 协调者返回SET STATUS "0" 代表操作失败
+ *      返回 SET ${val} XXX 代表 get的结果
+ *      返回 SET STATUS "1" 代表set或del成功
+ */
 
 PaServer &PaServer::init() {
     LOG_F(INFO, ":ip %s, port: %d", ip.c_str(), port);
@@ -52,11 +62,13 @@ void PaServer::run() {
         }
         LOG_F(INFO, "a new client is arrive : %s", inet_ntoa(serverAddr.sin_addr));
         this->counter++;
+        // TODO: 协调者挂掉了参与者也会突然挂掉
         std::thread tmp{[this, clientSocket] { // 不要用引用， clientSocket 是局部变量
             char buf[BUFSIZ];  //数据传送的缓冲区
             // 0 : 普通情况, 可以执行
             // 1 : 进入了1phase, 等待1phase
             int status = 0;
+            Command command_1phase;  // 接收的命令
             for (;;) {
                 LOG_F(INFO, "waiting for recv ...");
                 int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
@@ -64,11 +76,19 @@ void PaServer::run() {
                 LOG_F(INFO, "recv success .");
                 LOG_F(INFO, "recv msg: %s", buf);
 
+                Command command = Util::Decoder(buf);
+                LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
+                      command.value.c_str());
+
                 if (status == 0) {  // 1phase之前, 可以处理
                     // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
-
-                    // 合法返回成功
-                    std::string send_msg = "success";
+                    std::string send_msg;
+                    if (command.op < 0 || command.op > 2) {
+                        send_msg = "error";
+                    } else {
+                        // 合法返回成功
+                        send_msg = "success";
+                    }
                     if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
                         LOG_F(ERROR, "part send error !");
                     }
@@ -78,14 +98,25 @@ void PaServer::run() {
                         this->counter--;
 //                    break;
                     }
+                    command_1phase = command;
                     status = 1;
                     LOG_F(INFO, "status: 0 -> 1");
                 } else if (status == 1) {  // 如果已经进入了 1phase, 等待2phase
                     // 首先判断命令是否合法
-
-                    // 合法返回成功
-                    // 合法返回成功
-                    std::string send_msg = "success";
+                    std::string send_msg;
+                    if (command.op < 0 || command.op > 2) {
+                        send_msg = "error";
+                    } else {
+                        // 合法返回成功
+                        send_msg = "success";
+                    }
+                    std::string val;
+                    if (command_1phase.op == SET) {  // SET == 1
+                        KVDB[command_1phase.key] = command_1phase.value;
+                    } else if (command_1phase.op == GET) {  // GET == 0
+                        val = KVDB[command_1phase.key];
+                    }
+                    // TODO: 定义协议
                     if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
                         LOG_F(ERROR, "part send error !");
                     }
