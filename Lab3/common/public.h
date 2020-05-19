@@ -38,6 +38,7 @@ struct Participant {
     int port;
     int fd;
     bool isAlive;
+    bool isBack;
     RequestReply pc1Reply{0, ""};
     RequestReply pc2Reply{0, ""};
 };

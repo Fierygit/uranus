@@ -131,7 +131,7 @@ void PaServer::run() {
                 LOG_F(INFO, "to send: %s", send_msg.c_str());
                 // 统一发送
                 send_msg = Util::Encoder(send_msg);
-                LOG_F(INFO, "to send: %s", send_msg.c_str());
+                LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
                 if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
                     LOG_F(ERROR, "part send error !");
                 }
