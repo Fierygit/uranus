@@ -18,6 +18,9 @@
  *      返回 SET STATUS "1" 代表set或del成功
  */
 
+const int PRE_PHASE1 = 0;
+const int AFTER_PHASE1 = 1;
+
 PaServer &PaServer::init() {
     LOG_F(INFO, ":ip %s, port: %d", ip.c_str(), port);
 
@@ -89,7 +92,7 @@ void PaServer::run() {
                 std::string send_msg;
 
                 // 1phase之前, 可以处理
-                if (status == 0) {
+                if (status == PRE_PHASE1) {
                     // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
                     if (command.op < 0 || command.op > 2) {
                         send_msg = "SET STATUS \"0\"";
@@ -97,18 +100,8 @@ void PaServer::run() {
                         // 合法返回成功
                         send_msg = "SET STATUS \"1\"";
                     }
-                    send_msg = Util::Encoder(send_msg);
-                    if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
-                        LOG_F(ERROR, "part send error !");
-                    }
-
-                    if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "connection closed!!!");
-                        this->counter--;
-//                    break;
-                    }
                     command_1phase = command;
-                } else if (status == 1) {  // 如果已经进入了 1phase, 等待2phase
+                } else if (status == AFTER_PHASE1) {  // 如果已经进入了 1phase, 等待2phase
                     // 首先判断命令是否合法
                     std::string val;
                     if (command.op == 1 && command.key == "${key}" && command.value == "${commit}") {
@@ -143,12 +136,12 @@ void PaServer::run() {
                     LOG_F(ERROR, "part send error !");
                 }
 
-                if (status == 0) {
-                    status = 1;
-                    LOG_F(INFO, "status: 0 -> 1");
-                } else if (status == 1) {
-                    status = 0;
-                    LOG_F(INFO, "status: 1 -> 0");
+                if (status == PRE_PHASE1) {
+                    status = AFTER_PHASE1;
+                    LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
+                } else if (status == AFTER_PHASE1) {
+                    status = PRE_PHASE1;
+                    LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");
                 }
 
             }
