@@ -14,7 +14,6 @@
 #include <arpa/inet.h>
 
 
-
 void CoServer::run() {
     for (;;) {
         /**
@@ -50,7 +49,7 @@ void CoServer::run() {
 
             LOG_F(INFO, "1 phase success ! start to 2 phase");
             std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
-            LOG_F(INFO, "2 phase msg: %s",  Util::outputProtocol(msg).c_str());
+            LOG_F(INFO, "2 phase msg: %s", Util::outputProtocol(msg).c_str());
 
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
@@ -139,7 +138,7 @@ void CoServer::send2PaSync(std::string msg) {
     }
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
-        if (p->isAlive == false) continue;
+        if (!p->isAlive) continue;
         this->threadPool->addTask([&] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
@@ -158,7 +157,8 @@ void CoServer::send2PaSync(std::string msg) {
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
-                    LOG_F(INFO, "receive: %s", Util::outputProtocol(buf).c_str());
+                    std::cout << buf << std::endl;
+                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
                     Command command = Util::Decoder(buf);
                     LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
                           command.op, command.key.c_str(), command.value.c_str());
@@ -206,7 +206,7 @@ void CoServer::initCoSrver() {
     LOG_F(INFO, "start to listen !!!");
 }
 
-CoServer& CoServer::init() {
+CoServer &CoServer::init() {
 
 
     initCoSrver();
