@@ -37,6 +37,7 @@ void CoServer::run() {
         this->send2PaSync(commandStr);// 同步发送------------------------------------------------
         LOG_F(INFO, "1 phase send over !");
         for (Participant *p : participants) {
+            if (p->isAlive == false) continue;
             if (p->pc1Reply.stateCode != SUCCESS) {
                 pc1 = 1;
                 break;
@@ -47,8 +48,10 @@ void CoServer::run() {
         //2、 第二阶段*****************************************************************************
         if (pc1 == 0) {
 
-            LOG_F(INFO, "1 phase success !");
-            std::string msg = Util::Encoder("SET ${key} '${commit}'");
+            LOG_F(INFO, "1 phase success ! start to 2 phase");
+            // TODO: 编码有问题
+            std::string msg = Util::Encoder("SET key 'commit'");
+            LOG_F(INFO, "2 phase msg: %s", msg.c_str());
 
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
@@ -129,8 +132,15 @@ void CoServer::initPaSrver() {
 void CoServer::send2PaSync(std::string msg) {
     LOG_F(INFO, "before msg send");
     WaitGroup waitGroup;
-    waitGroup.Add(participants.size());//等待每一个 参与者的 到来
+    int alive_cnt = 0;
+    for (auto p: participants) {
+        if (p->isAlive) {
+            alive_cnt += 1;
+        }
+    }
+    waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
+        if (p->isAlive == false) continue;
         this->threadPool->addTask([&] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的

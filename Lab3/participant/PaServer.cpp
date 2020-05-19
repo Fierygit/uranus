@@ -53,23 +53,52 @@ void PaServer::run() {
         LOG_F(INFO, "a new client is arrive : %s", inet_ntoa(serverAddr.sin_addr));
         this->counter++;
         std::thread tmp{[this, clientSocket] { // 不要用引用， clientSocket 是局部变量
+            char buf[BUFSIZ];  //数据传送的缓冲区
+            // 0 : 普通情况, 可以执行
+            // 1 : 进入了1phase, 等待1phase
+            int status = 0;
             for (;;) {
-                char buf[BUFSIZ];  //数据传送的缓冲区
+                LOG_F(INFO, "waiting for recv ...");
                 int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
                 buf[len] = '\0';
+                LOG_F(INFO, "recv success .");
+                LOG_F(INFO, "recv msg: %s", buf);
 
-                std::string send_msg = "success";
-                if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
-                    LOG_F(ERROR, "part send error !");
-                }
+                if (status == 0) {  // 1phase之前, 可以处理
+                    // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
 
-                if (len <= 0) { // 如果co 挂了
-                    LOG_F(WARNING, "connection closed!!!");
-                    this->counter--;
+                    // 合法返回成功
+                    std::string send_msg = "success";
+                    if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                        LOG_F(ERROR, "part send error !");
+                    }
+
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "connection closed!!!");
+                        this->counter--;
 //                    break;
+                    }
+                    status = 1;
+                    LOG_F(INFO, "status: 0 -> 1");
+                } else if (status == 1) {  // 如果已经进入了 1phase, 等待2phase
+                    // 首先判断命令是否合法
+
+                    // 合法返回成功
+                    // 合法返回成功
+                    std::string send_msg = "success";
+                    if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                        LOG_F(ERROR, "part send error !");
+                    }
+
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "connection closed!!!");
+                        this->counter--;
+//                    break;
+                    }
+                    status = 0;
+                    LOG_F(INFO, "status: 1 -> 0");
                 }
 
-                LOG_F(INFO, "+++%s+++", buf);
             }
         }};
         tmp.detach();
