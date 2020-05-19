@@ -96,7 +96,9 @@ void CoServer::run() {
 
 
 /**
- * 首先先连接 所有的 pa
+ * 首先先连接 所有的 pa, 当cor 故障重连的时候， 这里去恢复连接
+ *
+ * todo 断了恢复，要不要检查同步？？？
  */
 
 void CoServer::initPaSrver() {
@@ -243,6 +245,7 @@ CoServer &CoServer::init() {
     // 同步连接 所有的 participant,
     initPaSrver();
 
+    this->keepAlive->init(this->participants);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -263,5 +266,11 @@ void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &
         tmp->ip = p.first, tmp->port = atoi(p.second.c_str());
         LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
         this->participants.push_back(tmp);
+    }
+}
+
+CoServer::~CoServer() {
+    {
+        LOG_F(INFO, "is over but just dont delete all source");
     }
 }

@@ -39,10 +39,11 @@ public:
             port(port),
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
-            keepAlive(new KeepAlive(3, 3)),
+            keepAlive(new KeepAlive(5, 11)),
             threadPool(new uranus::ThreadPool(3)),
-            needSyncData(false){}
+            needSyncData(false) {}
 
+    ~CoServer();
 
 private:
 

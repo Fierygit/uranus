@@ -31,6 +31,10 @@ struct RequestReply {
     std::string info;
 };
 
+
+using Time = decltype(std::chrono::system_clock::now());
+
+
 // 用应用传递, 只能有一个地方使用 fd
 struct Participant {
     std::mutex lock;
@@ -39,6 +43,7 @@ struct Participant {
     int fd;
     bool isAlive;
     bool isBack;
+    Time lastAlive{};
     RequestReply pc1Reply{0, ""};
     RequestReply pc2Reply{0, ""};
 };
@@ -46,6 +51,5 @@ struct Participant {
 typedef std::vector<Participant *> Participants;
 //using Participants = std::vector<Participant>;
 
-using Time = decltype(std::chrono::system_clock::now());
 
 #endif //LAB3_PUBLIC_H
