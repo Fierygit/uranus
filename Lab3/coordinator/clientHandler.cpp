@@ -65,7 +65,7 @@ void clientReadHandler(const SubClientContex &ctx) {
     while ((len = recv(clientSocket, buf, BUFSIZ, 0)) > 0) {
         buf[len] = '\0';
 
-        LOG_F(INFO, "%s", Util::outputProtocol(buf).c_str());
+//        LOG_F(INFO, "%s", Util::outputProtocol(buf).c_str());
         clientBuf.append(buf);
         if (Util::HandleBanBao(clientBuf)) {
             //Command command = Util::Decoder(clientBuf);

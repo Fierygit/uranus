@@ -135,7 +135,7 @@ void CoServer::initPaSrver() {
 
 // 发消息，返回的结果
 void CoServer::send2PaSync(std::string msg) {
-
+    LOG_F(INFO, "before msg send");
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
@@ -148,6 +148,7 @@ void CoServer::send2PaSync(std::string msg) {
                     LOG_F(WARNING, "participant %d send error!!!", p->port);
                     goto end;
                 } else {            //发送完等待接受
+                    LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
                     char buf[BUFSIZ];  //数据传送的缓冲区
                     int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
                     buf[len] = '\0';
@@ -156,7 +157,7 @@ void CoServer::send2PaSync(std::string msg) {
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
-
+                    LOG_F(INFO, "receive: %s", buf);
                     Command command = Util::Decoder(buf);
                     LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
                           command.op, command.key.c_str(), command.value.c_str());
@@ -167,7 +168,7 @@ void CoServer::send2PaSync(std::string msg) {
         });
     }
 //     把下面这个注释掉就可以返回了, 否则没有返回值
-//    waitGroup.Wait();  //等待所有的结果
+    waitGroup.Wait();  //等待所有的结果
 }
 
 
