@@ -14,10 +14,13 @@ public:
     std::vector<std::pair<std::string, std::string>> others;
 
     // 解析配置文件
-    void parse(const std::string& file_path);
+    void parse(const std::string &file_path);
 
     // 解析命令行参数
     static void parse_arg(int argc, char *argv[], std::string &file_path);
+
+    //get banner
+    static std::string getBanner(const std::string &path);
 
     // 分割字符
     static std::vector<std::string> split(const std::string &str, const std::string &delim);
@@ -47,12 +50,12 @@ void Config::parse_arg(int argc, char *argv[], std::string &file_path) {
 }
 
 // 解析配置文件
-void Config::parse(const std::string& file_path) {
+void Config::parse(const std::string &file_path) {
     std::ifstream ifile;
     ifile.open(file_path, std::ios::in);
 
-    if(!ifile.is_open()){
-        LOG_F(ERROR,"config can not open!!!");
+    if (!ifile.is_open()) {
+        LOG_F(ERROR, "config can not open!!!");
         exit(1);
     }
 
@@ -114,4 +117,19 @@ std::vector<std::string> Config::split(const std::string &str, const std::string
         prev = pos + delim.length();
     } while (pos < str.length() && prev < str.length());
     return tokens;
+}
+
+std::string Config::getBanner(const std::string &path) {
+    std::ifstream ifile;
+    ifile.open(path, std::ios::in);
+
+    if (!ifile.is_open()) {
+        LOG_F(ERROR, "can not find banner");
+    }
+    std::string line;
+    std::string ret;
+    while (getline(ifile, line)) {
+        ret += (line + "\n");
+    }
+    return ret;
 }

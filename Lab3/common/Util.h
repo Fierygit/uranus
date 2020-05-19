@@ -22,10 +22,13 @@ public:
     }
 
     static std::string outputProtocol(std::string &&str) {
-        while (int index = str.find("\\") != str.size()) {
-            str.replace(index, 1, "/");
+        std::string ret;
+        for (char &c : str) {
+            if( c != '\n' && c != '\n'){
+                ret.push_back(c);
+            }else ret.push_back('*');
         }
-        return str;
+        return ret;
     }
 
     /*

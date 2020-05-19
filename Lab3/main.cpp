@@ -8,6 +8,7 @@
 
 
 int main(int argc, char *argv[]) {
+    std::cout << Config::getBanner("../src/banner");
     std::string file_path;
     Config conf;
 
