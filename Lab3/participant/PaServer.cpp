@@ -77,7 +77,7 @@ void PaServer::run() {
                 int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
                 buf[len] = '\0';
                 LOG_F(INFO, "recv success .");
-                LOG_F(INFO, "recv msg: %s", Util::outputProtocol(buf).c_str());
+                LOG_F(INFO, "recv msg: %s", buf);
                 // 一定要先处理
                 if (len <= 0) { // 如果co 挂了
                     LOG_F(WARNING, "connection closed!!!");
@@ -128,10 +128,10 @@ void PaServer::run() {
                         send_msg = "SET STATUS \"0\"";
                     }
                 }
-                LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg.c_str()).c_str());
+                LOG_F(INFO, "to send: %s", send_msg.c_str());
                 // 统一发送
                 send_msg = Util::Encoder(send_msg);
-                LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg.c_str()).c_str());
+                LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
                 if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
                     LOG_F(ERROR, "part send error !");
                 }

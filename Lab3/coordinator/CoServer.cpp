@@ -14,9 +14,9 @@
 #include <arpa/inet.h>
 
 
-
 void CoServer::run() {
     for (;;) {
+        // loguru::shutdown();
         /**
          * 阻塞接受， 所有 client 的请求， 只要有请求就处理， 每次处理一个
          */
@@ -29,6 +29,21 @@ void CoServer::run() {
         LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
               command.value.c_str());
 
+        int tmpIsAlive = 0;// 一个都没活着， 直接返回错误的
+        for (Participant *&p : participants) if (p->isAlive)tmpIsAlive++;
+        if (tmpIsAlive == 0) {
+            std::string rep{"ERROR!"};
+            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
+                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+                continue;// 最好代码可以复用， 先放着
+            }
+        }
+
+        //################      stop the world      ############################################
+        if (this->needSyncData) {
+            LOG_F(INFO, "start sync the data");
+            //
+        }
 
         int pc1 = 0;
         // 1、 第一阶段，提交请求命令给particitans**************************************************
@@ -50,7 +65,7 @@ void CoServer::run() {
 
             LOG_F(INFO, "1 phase success ! start to 2 phase");
             std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
-            LOG_F(INFO, "2 phase msg: %s",  Util::outputProtocol(msg).c_str());
+            LOG_F(INFO, "2 phase msg: %s", Util::outputProtocol(msg).c_str());
 
             this->send2PaSync(msg);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
@@ -65,6 +80,12 @@ void CoServer::run() {
         }
         if (pc2 == 0) {
             std::string rep{"SUCCESS!"};
+            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
+                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+                return;
+            }
+        } else {
+            std::string rep{"ERROR!"};
             if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
                 LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
                 return;
@@ -137,10 +158,13 @@ void CoServer::send2PaSync(std::string msg) {
             alive_cnt += 1;
         }
     }
+
+
+    // 如果发送不了，直接返回错误， 然后执行abort
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *&p : participants) {
-        if (p->isAlive == false) continue;
-        this->threadPool->addTask([&] {
+        if (!p->isAlive) continue;
+        this->threadPool->addTask([&] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
@@ -158,7 +182,8 @@ void CoServer::send2PaSync(std::string msg) {
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
-                    LOG_F(INFO, "receive: %s", Util::outputProtocol(buf).c_str());
+                    //std::cout << buf << std::endl;
+                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
                     Command command = Util::Decoder(buf);
                     LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
                           command.op, command.key.c_str(), command.value.c_str());
@@ -206,7 +231,7 @@ void CoServer::initCoSrver() {
     LOG_F(INFO, "start to listen !!!");
 }
 
-CoServer& CoServer::init() {
+CoServer &CoServer::init() {
 
 
     initCoSrver();
@@ -225,10 +250,6 @@ CoServer& CoServer::init() {
 
 int CoServer::getServerSockfd() const {
     return serverSockfd;
-}
-
-void CoServer::addClient(const Client &client) const {
-
 }
 
 BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {

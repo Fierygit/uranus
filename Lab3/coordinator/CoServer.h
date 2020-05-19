@@ -40,7 +40,8 @@ public:
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             keepAlive(new KeepAlive(3, 3)),
-            threadPool(new uranus::ThreadPool(3)) {}
+            threadPool(new uranus::ThreadPool(3)),
+            needSyncData(false){}
 
 
 private:
@@ -72,8 +73,6 @@ public:
 
 public:
 
-    void addClient(const Client &) const;
-
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 
 private:
@@ -85,6 +84,8 @@ private:
 
     // 用于发送信息的，线程池
     uranus::ThreadPool *threadPool;
+
+    std::atomic<bool> needSyncData;
 
 
 private:
