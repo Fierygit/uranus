@@ -75,6 +75,12 @@ void PaServer::run() {
                 buf[len] = '\0';
                 LOG_F(INFO, "recv success .");
                 LOG_F(INFO, "recv msg: %s", buf);
+                // 一定要先处理
+                if (len <= 0) { // 如果co 挂了
+                    LOG_F(WARNING, "connection closed!!!");
+                    this->counter--;
+                    break;
+                }
 
                 Command command = Util::Decoder(buf);
                 LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
@@ -137,11 +143,6 @@ void PaServer::run() {
                     LOG_F(ERROR, "part send error !");
                 }
 
-                if (len <= 0) { // 如果co 挂了
-                    LOG_F(WARNING, "connection closed!!!");
-                    this->counter--;
-//                    break;
-                }
                 if (status == 0) {
                     status = 1;
                     LOG_F(INFO, "status: 0 -> 1");
