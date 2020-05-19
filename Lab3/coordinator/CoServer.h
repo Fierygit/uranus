@@ -10,6 +10,7 @@
 #include <vector>
 #include <netinet/in.h>
 #include <map>
+#include <atomic>
 #include "../common/public.h"
 #include "../coordinator/BoundedBlockingQueue.h"
 #include "KeepAlive.h"
@@ -27,7 +28,6 @@ struct Client {
 };
 
 
-
 class CoServer {
 
 public:
@@ -40,10 +40,7 @@ public:
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             keepAlive(new KeepAlive(3, 3)),
-
             threadPool(new uranus::ThreadPool(3)) {}
-
-
 
 
 private:
@@ -56,7 +53,7 @@ private:
 
 
 public:
-    CoServer init();
+    CoServer &init();
 
     // 设置参与者
     void setParticipant(std::vector<std::pair<std::string, std::string>> &);
@@ -74,9 +71,8 @@ public:
     using TaskNode = std::pair<Client, std::string>;
 
 public:
-    const Clients &getClients() const;
 
-    void addClient(const Client&) const;
+    void addClient(const Client &) const;
 
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 
@@ -94,6 +90,7 @@ private:
 private:
     Clients clients;
     Participants participants;
+    //std::atomic<int> paNum; //活着多少个pa， 一个都没有返回false
 
 
 /*

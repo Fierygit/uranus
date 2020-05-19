@@ -14,17 +14,6 @@
 #include <arpa/inet.h>
 
 
-//todo 放到 public 重复包含？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
-
-std::string welcomeLogo = "             _  .-')     ('-.         .-') _               .-')    \n"
-                          "            ( \\( -O )   ( OO ).-.    ( OO ) )             ( OO ).  \n"
-                          " ,--. ,--.   ,------.   / . --. /,--./ ,--,' ,--. ,--.   (_)---\\_) \n"
-                          " |  | |  |   |   /`. '  | \\-.  \\ |   \\ |  |\\ |  | |  |   /    _ |  \n"
-                          " |  | | .-') |  /  | |.-'-'  |  ||    \\|  | )|  | | .-') \\  :` `.  \n"
-                          " |  |_|( OO )|  |_.' | \\| |_.'  ||  .     |/ |  |_|( OO ) '..`''.) \n"
-                          " |  | | `-' /|  .  '.'  |  .-.  ||  |\\    |  |  | | `-' /.-._)   \\ \n"
-                          "('  '-'(_.-' |  |\\  \\   |  | |  ||  | \\   | ('  '-'(_.-' \\       / \n"
-                          "  `-----'    `--' '--'  `--' `--'`--'  `--'   `-----'     `-----'  ";
 
 void CoServer::run() {
     for (;;) {
@@ -37,7 +26,9 @@ void CoServer::run() {
         Command command = Util::Decoder(commandStr);
         sockaddr_in clientAddr = client.addr;
 
-        LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
+        LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
+              command.value.c_str());
+
 
         int pc1 = 0;
         // 1、 第一阶段，提交请求命令给particitans**************************************************
@@ -94,10 +85,10 @@ void CoServer::initPaSrver() {
     WaitGroup waitGroup;
     waitGroup.Add(participants.size());
 
-    for (Participant* &p : this->participants) {
+    for (Participant *&p : this->participants) {
         // 放进线程池处理
         threadPool->addTask([this, &p, &waitGroup] { // 不要用引用， clientSocket 是局部变量
-            struct sockaddr_in remoteAddr; //服务器端网络地址结构体
+            struct sockaddr_in remoteAddr{}; //服务器端网络地址结构体
             int clientSockfd;
 
             memset(&remoteAddr, 0, sizeof(remoteAddr)); //数据初始化--清零
@@ -121,6 +112,7 @@ void CoServer::initPaSrver() {
                 LOG_F(INFO, "connect success... ip: %s, port: %d, socket: %d", p->ip.c_str(), p->port, clientSockfd);
                 p->fd = clientSockfd;
                 p->isAlive = true;
+//                this->paNum++;
             }
             waitGroup.Done(); // 结束喽！！！！！！
         });
@@ -153,7 +145,7 @@ void CoServer::send2PaSync(std::string msg) {
                     int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
                     buf[len] = '\0';
                     if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "participant %d connection closed!!!",p->port);
+                        LOG_F(WARNING, "participant %d connection closed!!!", p->port);
                         p->pc1Reply.stateCode = 1; //接受挂了
                         goto end;
                     }
@@ -205,9 +197,8 @@ void CoServer::initCoSrver() {
     LOG_F(INFO, "start to listen !!!");
 }
 
-CoServer CoServer::init() {
-    //欢迎logo
-    //std::cout << welcomeLogo << std::endl;
+CoServer& CoServer::init() {
+
 
     initCoSrver();
 
@@ -225,10 +216,6 @@ CoServer CoServer::init() {
 
 int CoServer::getServerSockfd() const {
     return serverSockfd;
-}
-
-const CoServer::Clients &CoServer::getClients() const {
-    return clients;
 }
 
 void CoServer::addClient(const Client &client) const {
