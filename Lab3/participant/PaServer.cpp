@@ -80,15 +80,18 @@ void PaServer::run() {
                 LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
                       command.value.c_str());
 
-                if (status == 0) {  // 1phase之前, 可以处理
+                std::string send_msg;
+
+                // 1phase之前, 可以处理
+                if (status == 0) {
                     // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
-                    std::string send_msg;
                     if (command.op < 0 || command.op > 2) {
-                        send_msg = "error";
+                        send_msg = "SET STATUS \"0\"";
                     } else {
                         // 合法返回成功
-                        send_msg = "success";
+                        send_msg = "SET STATUS \"1\"";
                     }
+                    send_msg = Util::Encoder(send_msg);
                     if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
                         LOG_F(ERROR, "part send error !");
                     }
@@ -99,33 +102,50 @@ void PaServer::run() {
 //                    break;
                     }
                     command_1phase = command;
-                    status = 1;
-                    LOG_F(INFO, "status: 0 -> 1");
                 } else if (status == 1) {  // 如果已经进入了 1phase, 等待2phase
                     // 首先判断命令是否合法
-                    std::string send_msg;
-                    if (command.op < 0 || command.op > 2) {
-                        send_msg = "error";
-                    } else {
-                        // 合法返回成功
-                        send_msg = "success";
-                    }
                     std::string val;
-                    if (command_1phase.op == SET) {  // SET == 1
-                        KVDB[command_1phase.key] = command_1phase.value;
-                    } else if (command_1phase.op == GET) {  // GET == 0
-                        val = KVDB[command_1phase.key];
+                    if (command.op == 1 && command.key == "${key}" && command.value == "${commit}") {
+                        // 要求提交
+                        if (command_1phase.op == SET) {  // SET == 1
+                            KVDB[command_1phase.key] = command_1phase.value;
+                            send_msg = "SET STATUS \"1\"";
+                        } else if (command_1phase.op == GET) {  // GET == 0
+                            if (KVDB.count(command_1phase.key) == 0) {
+                                // 没有这个值
+                                send_msg = "SET STATUS \"0\"";
+                            } else {
+                                val = KVDB[command_1phase.key];
+                                send_msg = "SET ${val} " + std::string("\"" + val + "\"");
+                            }
+                        } else if (command_1phase.op == DEL) {  // DEL == 2
+                            KVDB.erase(command_1phase.key);
+                            send_msg = "SET STATUS \"1\"";
+                        } else {  // 命令不合法
+                            send_msg = "SET STATUS \"0\"";
+                        }
+                    } else {
+                        // 要求终止
+                        send_msg = "SET STATUS \"0\"";
                     }
-                    // TODO: 定义协议
-                    if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
-                        LOG_F(ERROR, "part send error !");
-                    }
+                }
+                LOG_F(INFO, "to send: %s", send_msg.c_str());
+                // 统一发送
+                send_msg = Util::Encoder(send_msg);
+                LOG_F(INFO, "to send: %s", send_msg.c_str());
+                if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                    LOG_F(ERROR, "part send error !");
+                }
 
-                    if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "connection closed!!!");
-                        this->counter--;
+                if (len <= 0) { // 如果co 挂了
+                    LOG_F(WARNING, "connection closed!!!");
+                    this->counter--;
 //                    break;
-                    }
+                }
+                if (status == 0) {
+                    status = 1;
+                    LOG_F(INFO, "status: 0 -> 1");
+                } else if (status == 1) {
                     status = 0;
                     LOG_F(INFO, "status: 1 -> 0");
                 }
