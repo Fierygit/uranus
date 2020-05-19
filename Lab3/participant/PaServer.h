@@ -39,6 +39,9 @@ private:
     std::atomic<int> counter{0}; // 记录有多少个 co 连接了， 理论只有一个 co
     std::map<std::string, std::string> KVDB;  // 键值数据库
 
+private:
+    void handleCoor(int clientSocket);
+
 };
 
 
