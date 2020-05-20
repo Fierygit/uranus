@@ -365,7 +365,10 @@ void CoServer::syncKVDB() {
             LOG_F(INFO, (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
+            for (auto s: leaderData) {
+                LOG_F(INFO, "leaderData: %s", s.c_str());
 
+            }
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
         }

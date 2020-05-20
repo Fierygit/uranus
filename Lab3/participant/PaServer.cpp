@@ -211,7 +211,7 @@ void PaServer::handleCoor(int clientSocket) {
                 if (status == PRE_PHASE1) {
                     status = AFTER_PHASE1;
                     LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
-                } else if (status == AFTER_PHASE1) {
+                } else {
                     status = PRE_PHASE1;
                     this->latestIndex += 1;
                     LOG_F(INFO, "NOTE: this->latestIndex += 1, latestIndex: %d", this->latestIndex);
