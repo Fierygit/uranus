@@ -180,10 +180,12 @@ target_link_libraries(
 #################################测试 waitgroup
 add_executable(ThreadPool
         test/testThreadPool.cpp
+        common/loguru.cpp
         common/ThreadPool.cpp)
 target_link_libraries(
         ThreadPool
         pthread
+        dl
 )
 
 #################################测试 select

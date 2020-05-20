@@ -5,6 +5,7 @@
 #include <thread>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 #include "KeepAlive.h"
 #include "../common/Util.h"
 #include "../common/loguru.hpp"
@@ -17,7 +18,7 @@ void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
-            std::this_thread::sleep_for(checkInterval); // 10 秒一跳
+            std::this_thread::sleep_for(std::chrono::seconds(3));
             keepaliveCheck(participants, needSyncData, poll);
         }
     }};
@@ -37,7 +38,7 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
     WaitGroup waitGroup;
     waitGroup.Add("keepAlive", participants.size());
     for (Participant *p : participants) {
-        pool->addTask([&] {
+        pool->addTask([p,&needSyncData,&pool,this,&waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII

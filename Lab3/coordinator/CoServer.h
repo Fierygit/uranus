@@ -41,8 +41,9 @@ public:
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             threadPool(new uranus::ThreadPool(3)),
-            keepAlive(new KeepAlive(5, 11)),
-            needSyncData(false) {}
+            needSyncData(false),
+            keepAlive(new KeepAlive(5, 11)){}
+            //keepAlive 一直放到最后
 
     ~CoServer();
 

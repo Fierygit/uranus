@@ -19,11 +19,11 @@ int main() {
     for (int i = 0; i < cnt; i++) {
         threadPool.addTask([&] {
             int w = random() % 6;   // 执行太快了都获取不到随机数
-            sleep(w);
-            printf("wait %d  over\n", w);
+            //sleep(w);
+            printf("%d wait %d  over\n", i, w);
             waitGroup.Done();
         });
-        sleep(random() % 1); // 为了获取一个上面的随机数
+        //sleep(random() % 1); // 为了获取一个上面的随机数
     }
     waitGroup.Wait();
     threadPool.stop();

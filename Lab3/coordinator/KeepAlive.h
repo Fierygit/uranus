@@ -33,7 +33,7 @@ private:
     void sendAndRecv(Participant *p);
 
 private:
-    Munites checkInterval{};
+    int checkInterval;
     Munites invalidInterval{}; // 判定失效间隔
     volatile bool Finished{false};
 };
