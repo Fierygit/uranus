@@ -300,8 +300,13 @@ int CoServer::getAliveCnt() {
     return wait_cnt;
 }
 
-// 获取一个 p 最新的 操作(日志)索引
-void CoServer::getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
+/* 获取一个 p 最新的 操作(日志)索引
+ * C to P: GET "${LatestIndex}"
+ * P to C: SET ${LatestIndex} ${value}  // ${value} 代表p的 latestIndex
+ *
+ * 写入到 p->lastIndex
+ */
+void CoServer::getLatestIndex(Participant *p) {
     LOG_F(INFO, "Trying to get Lastest index");
 
     // 协议
@@ -327,25 +332,31 @@ void CoServer::getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std
             // 保存结果
             p->lastIndex = atoi(command.value.c_str());
             LOG_F(INFO, "set %s:%d latestIndex: %d", p->ip.c_str(), p->port, p->lastIndex);
-            result[idx] = atoi(command.value.c_str());
         }
     }
 }
 
-// 同步数据库
+/* 同步数据库
+ * 先调用 getLatestIndex 查看是否有数据库落下
+ * 如果没有:
+ *      退出
+ * 否则:
+ *      调用 getLeaderData 获得可以作为 主参与者 的数据
+ *      对每个 需要sync的参与者:
+ *          调用 syncOnePart
+ */
 void CoServer::syncKVDB() {
     WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
     //todo 中途有新的 p 加入进来怎么办？？？？？？？？？？？？？？？？
     waitSyncGroup.Add(this->getAliveCnt());
-    std::vector<int> result(participants.size());
     int idx = -1;
     for (Participant *p: participants) {
         idx++;
         if (!p->isAlive) continue;
         // 注意用法
-        std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
-            this->getLatestIndex(p, &waitSyncGroup, idx, result);
+        std::thread handleSync([this, p, &waitSyncGroup] {
+            this->getLatestIndex(p);
             waitSyncGroup.Done();
         });
         handleSync.detach();
@@ -404,6 +415,11 @@ void CoServer::syncKVDB() {
 /* 协议: 获取leader的全部数据, 用来同步那些落后的参与者
  * C to P: GET "${KVDB}"
  * P to C: SET ${KVDB_cnt} "${KVDB.size()}"
+ * loop: size = KVDB.size():
+ *      C to P: GET "${KVDB_next}"
+ *      P to C: Encoder(SET item.first "item.second")  // item is a (key, value) in KVDB
+ *
+ * save Data to std::vector<std::string> leaderData;
  */
 std::vector<std::string> CoServer::getLeaderData(Participant* p) {
     std::vector<std::string> leaderData;

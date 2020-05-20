@@ -2,9 +2,13 @@
 
 
 
-![](cpp.svg) 
+![](assets/cpp.svg) ![](assets/support.svg)
 
-![](logo.png)
+A two-stage commit project implemented in C + +. A simple key value distributed database is implemented
+
+
+
+![](assets/logo.png)
 
 
 
@@ -12,7 +16,62 @@
 
 ## Protocol
 
+
+
+### 同步参与者
+
+> void syncKVDB();
+
+```
+同步数据库
+先调用 getLatestIndex 查看是否有数据库落下
+如果没有:
+     退出
+否则:
+     调用 getLeaderData 获得可以作为 主参与者 的数据
+     对每个 需要sync的参与者:
+         调用 syncOnePart
+```
+
+
+
+
+
+### 获取最近索引
+
+> void getLatestIndex(Participant *p);
+
+```
+获取一个 p 最新的 操作(日志)索引
+C to P: GET "${LatestIndex}"
+P to C: SET ${LatestIndex} ${value}  // ${value} 代表p的 latestIndex
+```
+
+
+
+### 获取leader的数据
+
+> std::vector<std::string> getLeaderData(Participant* p);
+
+注意: 这里的leader指的是参与者中数据索引最高的一个, 将它的数据拷贝到其他需要同步的参与者中
+
+```
+协议: 获取leader的全部数据, 用来同步那些落后的参与者
+C to P: GET "${KVDB}"
+P to C: SET ${KVDB_cnt} "${KVDB.size()}"
+loop: size = KVDB.size():
+     C to P: GET "${KVDB_next}"
+     P to C: Encoder(SET item.first "item.second")  // item is a (key, value) in KVDB
+
+save Data to std::vector<std::string> leaderData;
+
+```
+
+
+
 ### 单参与者同步协议
+
+> void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex);
 
 同步单个参与者, 使用leaderData
 

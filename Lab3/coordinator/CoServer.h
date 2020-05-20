@@ -47,17 +47,6 @@ public:
 
     ~CoServer();
 
-private:
-
-    void initCoSrver();
-
-    void initPaSrver();
-
-    int getAliveCnt();
-
-    void send2PaSync(std::string msg);
-
-
 public:
     CoServer &init();
 
@@ -69,21 +58,30 @@ public:
     int getServerSockfd() const;
 
 private:
-    void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
+    void initCoSrver();
+
+    void initPaSrver();
+
+    void send2PaSync(std::string msg);
+
+private:
     void syncKVDB();
+    void getLatestIndex(Participant *p);
     std::vector<std::string> getLeaderData(Participant* p);
     void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex);
 
-    const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
+    int getAliveCnt();
 
+    const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
     uranus::ThreadPool *getThreadPool() const;
+
+
 // 系统信息
 public:
     using Clients = std::vector<Client>;
     using TaskNode = std::pair<Client, std::string>;
 
 public:
-
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 
 
@@ -101,7 +99,6 @@ private:
 
     Participants participants;
     //std::atomic<int> paNum; //活着多少个pa， 一个都没有返回false
-
 
 /*
  * 本服务器的信息
