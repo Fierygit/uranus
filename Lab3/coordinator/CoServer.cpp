@@ -38,6 +38,7 @@ void CoServer::run() {
             }
         }
 
+        // 这是设计错误， 万一一直没有数据， 就卡住了
         //################      stop the world      ############################################
         if (this->needSyncData) {
             LOG_F(INFO, "start sync the data");
@@ -166,9 +167,9 @@ void CoServer::send2PaSync(std::string msg) {
 
     // 如果发送不了，直接返回错误， 然后执行abort
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
-    for (Participant *&p : participants) {
+    for (Participant *p : participants) {
         if (!p->isAlive) continue;
-        this->threadPool->addTask([&] {//
+        this->threadPool->addTask([p,&msg,&waitGroup] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
@@ -237,17 +238,17 @@ void CoServer::initCoSrver() {
 
 CoServer &CoServer::init() {
 
-
+    // 同步初始化自己的服务
     initCoSrver();
+
+    // 同步连接所有的 participant,
+    initPaSrver();
+
+    this->keepAlive->init(participants,needSyncData,threadPool);
 
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
-
-    // 同步连接 所有的 participant,
-    initPaSrver();
-
-    this->keepAlive->init(participants,needSyncData,threadPool);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -323,6 +324,7 @@ void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std
 void CoServer::syncKVDB() {
     WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
+    //todo 中途有新的 p 加入进来怎么办？？？？？？？？？？？？？？？？
     waitSyncGroup.Add(this->getAliveCnt());
     std::vector<int> result(participants.size());
     int idx = -1;
@@ -362,7 +364,7 @@ void CoServer::syncKVDB() {
         if (toSyncParts.empty()) {
             LOG_F(INFO, "nothing to sync ...");
         } else {
-            LOG_F(INFO, (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
+            LOG_F(INFO,"%s", (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
             for (auto s: leaderData) {
