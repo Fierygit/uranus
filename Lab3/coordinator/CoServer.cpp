@@ -255,14 +255,14 @@ CoServer &CoServer::init() {
     // 同步连接所有的 participant,
     initPaSrver();
 
-
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
-    acThread.detach();
 
+    // 初始化心跳包
     this->keepAlive->init(participants,needSyncData,threadPool);
 
     LOG_F(INFO, "init over");
+    acThread.detach();
     return *this;
 }
 
