@@ -72,7 +72,7 @@ private:
     void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
     void syncKVDB();
     std::vector<std::string> getLeaderData(Participant* p);
-    void syncOnePart(Participant *p, const std::vector<std::string>& leaderData);
+    void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex);
 
     const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
 
