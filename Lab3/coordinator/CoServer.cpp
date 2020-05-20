@@ -147,8 +147,10 @@ void CoServer::run() {
 /**
  * 首先先连接 所有的 pa, 当cor 故障重连的时候， 这里去恢复连接
  *
- * todo 断了恢复，要不要检查同步？？？
- */
+ * */
+
+// todo 断了恢复，要不要检查同步？？？
+
 
 void CoServer::initPaSrver() {
     LOG_F(INFO, "start to init PaServer ...");

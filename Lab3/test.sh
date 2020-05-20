@@ -1,13 +1,13 @@
 #!/bin/bash
 
-
+# 接受 命令行的两个参数
 LAB3_PATH="$1"
 PASSWORD="$2"
 
 
 
 # ######################################################################
-
+#todo 这个ip有用吗？
 COORDINATOR_IP=192.168.66.101
 COORDINATOR_PORT=8001
 NC_TIMEOUT=3
