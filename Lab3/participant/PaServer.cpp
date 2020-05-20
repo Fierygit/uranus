@@ -114,8 +114,9 @@ void PaServer::handleCoor(int clientSocket) {
             send_msg = "SET ${LatestIndex} \"" + std::to_string(this->latestIndex) + "\"";
             command_run = false;
         }
+        // 作为 leader, 将数据发送给协调者
         else if (command.op == GET && command.key == "${KVDB}") {
-            LOG_F(INFO, "CoServer: request to sync data");
+            LOG_F(INFO, "CoServer: request to sync data as leader");
             // 被同步数据
             send_msg = "SET ${KVDB_cnt} \"" + std::to_string(this->KVDB.size()) + "\"";
             command_run = false;
@@ -158,6 +159,79 @@ void PaServer::handleCoor(int clientSocket) {
                 }
             }
         }
+        // 作为被同步的对象, 指明了循环的次数
+        else if (command.op == SET && command.key == "${KVDB_sync_one}") {
+            // 收到需要同步的消息, 先重置索引
+            // TODO: 这里有个小问题: 如果重置了, 然后其他的都是新的, 就不用同步, 但是数据不一致
+            // TODO: 考虑一些特殊情况
+            this->latestIndex = 0;
+            this->KVDB.clear();
+
+            // 分离 latestIndex 和 loop_cnt
+            std::string latestIndexStr, loopCntStr;
+            bool left = true;
+            for (char ch: command.value) {
+                if (ch == '_') {
+                    left = false;
+                    continue;
+                }
+                if (left) {
+                    latestIndexStr += ch;
+                } else {
+                    loopCntStr += ch;
+                }
+            }
+            int latestIndex = atoi(latestIndexStr.c_str());
+            int loopCnt = atoi(loopCntStr.c_str());
+            LOG_F(INFO, "CoServer: latestIndex: %d, loopCnt: %d", latestIndex, loopCnt);
+
+            LOG_F(INFO, "CoServer: sync it single");
+            command_run = false;
+            // 被同步数据
+            send_msg = "SET ${KVDB_sync_one} \"OK\"";
+            LOG_F(INFO, "to send: %s", send_msg.c_str());
+            // 统一发送
+            send_msg = Util::Encoder(send_msg);
+            LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
+            if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                LOG_F(ERROR, "part send error !");
+            } else {
+                while (loopCnt--) {
+                    // 接一个设置再发一个反馈
+                    LOG_F(INFO, "waiting for KVDB_sync_one ...");
+                    int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
+                    buf[len] = '\0';
+                    LOG_F(INFO, "recv msg: %s", buf);
+                    // 一定要先处理
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "connection closed!!!");
+                        break;
+                    }
+
+                    Command command = Util::Decoder(buf);
+                    LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
+                          command.value.c_str());
+
+                    // 对 KV 数据库进行设置
+                    if (command.op == SET) {
+                        LOG_F(INFO, "KVDB: set (key:%s, val:%s)", command.key.c_str(), command.value.c_str());
+                        KVDB[command.key] = command.value;
+
+                        // 发送回馈的消息
+                        send_msg = "SET SYNC_STATUS \"1\"";
+                        LOG_F(INFO, "to send: %s", send_msg.c_str());
+                        // 统一发送
+                        send_msg = Util::Encoder(send_msg);
+                        LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
+                        if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                            LOG_F(ERROR, "part send error !");
+                        }
+                    }
+                }
+
+            }
+        }
+        // 其他的 正常的命令
         else {
             // 1phase之前, 可以处理
             if (status == PRE_PHASE1) {
@@ -213,6 +287,7 @@ void PaServer::handleCoor(int clientSocket) {
                     LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
                 } else {
                     status = PRE_PHASE1;
+                    // TODO: 需要添加 get 操作不影响索引
                     this->latestIndex += 1;
                     LOG_F(INFO, "NOTE: this->latestIndex += 1, latestIndex: %d", this->latestIndex);
                     LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");

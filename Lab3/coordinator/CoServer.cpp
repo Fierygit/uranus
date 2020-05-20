@@ -333,6 +333,7 @@ void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std
     }
 }
 
+// 同步数据库
 void CoServer::syncKVDB() {
     WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
@@ -362,9 +363,11 @@ void CoServer::syncKVDB() {
             maxIndex = i;
         }
     }
+    // 获取leader
     if (maxIndex != -1) {
         Participant* mainPart = participants[maxIndex];
-        LOG_F(INFO, "maxIndex: %d, max part: (%s:%d)", maxIndex, mainPart->ip.c_str(), mainPart->port);
+        LOG_F(INFO, "maxLogIndex: %d, max part: (%s:%d)", maxLogIndex, mainPart->ip.c_str(), mainPart->port);
+        // 开始查找需要进行同步的参与者
         std::vector<Participant*> toSyncParts;
         for (int i = 0; i < participants.size(); i++) {
             if (!participants[i]->isAlive) continue;
@@ -380,11 +383,17 @@ void CoServer::syncKVDB() {
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
             for (auto s: leaderData) {
-                LOG_F(INFO, "leaderData: %s", s.c_str());
-
+                LOG_F(INFO, "leaderData: %s", Util::outputProtocol(s).c_str());
             }
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
+            for (auto& p: toSyncParts) {
+                std::thread handleOneSync([this, p, &leaderData, maxIndex] {
+                    LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
+                    this->syncOnePart(p, leaderData, maxIndex);
+                });
+                handleOneSync.detach();
+            }
         }
     } else {
         LOG_F(INFO, "nothing to sync ...");
@@ -455,4 +464,34 @@ const Participants &CoServer::getParticipants() const {
 
 uranus::ThreadPool *CoServer::getThreadPool() const {
     return threadPool;
+}
+
+// 同步单个参与者, 使用leaderData
+void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex) {
+    std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
+    std::vector<std::string> newLeaderData = leaderData;
+    // TODO: 加入索引信息
+
+    std::string msg = Util::Encoder("SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
+    LOG_F(INFO, "syncOnePart: to send: %s", Util::outputProtocol(msg).c_str());
+    newLeaderData.insert(leaderData.begin(), msg);
+    char buf[BUFSIZ];  //数据传送的缓冲区
+
+    for (const auto& msg: newLeaderData) {
+        if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
+            LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
+        } else {
+            int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+            buf[len] = '\0';
+            if (len <= 0) { // 如果co 挂了
+                LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+            }
+            LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+            Command command = Util::Decoder(buf);
+            LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                  command.op, command.key.c_str(), command.value.c_str());
+        }
+    }
+
+    LOG_F(INFO, "end: sync for (%s:%d)", p->ip.c_str(), p->port);
 }
