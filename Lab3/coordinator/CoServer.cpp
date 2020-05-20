@@ -143,9 +143,6 @@ void CoServer::initPaSrver() {
         });
     }
     waitGroup.Wait();
-
-    // 同步KV数据库
-    this->syncKVDB();
 }
 
 /**
@@ -254,6 +251,9 @@ CoServer &CoServer::init() {
 
     // 同步连接所有的 participant,
     initPaSrver();
+
+    // 同步KV数据库
+    std::thread handleSyncKVDB([this] {this->syncKVDB();});
 
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
