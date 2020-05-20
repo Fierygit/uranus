@@ -108,7 +108,7 @@ enable_testing()
 add_executable(testBlockingqueue
         common/loguru.cpp
         test/testBlockingqueue.cpp
-        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testWaitGroup.cpp)
+        coordinator/BoundedBlockingQueue.h test/testEncoder.cpp test/testWaitGroup.cpp )
 add_test(NAME testBlockingqueue COMMAND testBlockingqueue)
 
 # 添加 thread
@@ -185,6 +185,17 @@ target_link_libraries(
         ThreadPool
         pthread
 )
+
+#################################测试 select
+add_executable(testSelect
+        test/testSelect.cpp)
+
+target_link_libraries(
+        ThreadPool
+        pthread
+)
+
+
 
 ### tse
 #add_executable(Test

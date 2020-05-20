@@ -40,8 +40,8 @@ public:
             port(port),
             ip(std::move(ip)),
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
-            keepAlive(new KeepAlive(5, 11)),
             threadPool(new uranus::ThreadPool(3)),
+            keepAlive(new KeepAlive(5, 11)),
             needSyncData(false) {}
 
     ~CoServer();
@@ -66,13 +66,15 @@ public:
     void run();
 
     int getServerSockfd() const;
-    void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
+
+    void getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std::vector<int> &result);
+
     void test1(Participant *p);
 
-/*
- * 系统信息
- */
+    const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
 
+    uranus::ThreadPool *getThreadPool() const;
+// 系统信息
 public:
     using Clients = std::vector<Client>;
     using TaskNode = std::pair<Client, std::string>;
@@ -81,21 +83,19 @@ public:
 
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 
+
+    // c++ 的初始化顺序只与 ， 声明的顺序有关， 线程池一定要在keepealive 前声明
 private:
-    //把并行的强行转为 串行， 最多等待 n 个任务， 当大于时， 停止服务 important
-    BoundedBlockingQueue<TaskNode> *tastNodes;
-
-    // 心跳检测
-    KeepAlive *keepAlive;
-
     // 用于发送信息的，线程池
     uranus::ThreadPool *threadPool;
 
+    //把并行的强行转为 串行， 最多等待 n 个任务， 当大于时， 停止服务 important
+    BoundedBlockingQueue<TaskNode> *tastNodes;
+
     std::atomic<bool> needSyncData;
 
-
-private:
     Clients clients;
+
     Participants participants;
     //std::atomic<int> paNum; //活着多少个pa， 一个都没有返回false
 
@@ -109,6 +109,10 @@ private:
     std::string ip;
     int serverSockfd;
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
+
+private:
+    // 心跳检测
+    KeepAlive *keepAlive;
 };
 
 

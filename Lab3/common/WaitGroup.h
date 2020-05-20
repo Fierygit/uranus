@@ -16,6 +16,10 @@ public:
         counter += incr;
         LOG_F(INFO, "WaitGroup num : %d ", incr);
     }
+    void Add(std::string info,int incr = 1){
+        counter += incr;
+        LOG_F(INFO, "%s WaitGroup num : %d ",info.c_str(), incr);
+    }
 
     void Done() {
         counter--;
