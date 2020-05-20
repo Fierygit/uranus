@@ -253,7 +253,7 @@ CoServer &CoServer::init() {
     initPaSrver();
 
     // 同步KV数据库
-    std::thread handleSyncKVDB([this] {this->syncKVDB();});
+    threadPool->addTask([this] {this->syncKVDB();});
 
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
@@ -400,7 +400,10 @@ void CoServer::syncKVDB() {
     }
 }
 
-
+/* 协议: 获取leader的全部数据, 用来同步那些落后的参与者
+ * C to P: GET "${KVDB}"
+ * P to C: SET ${KVDB_cnt} "${KVDB.size()}"
+ */
 std::vector<std::string> CoServer::getLeaderData(Participant* p) {
     std::vector<std::string> leaderData;
     // 协议, 获取整个KVDB
@@ -466,7 +469,20 @@ uranus::ThreadPool *CoServer::getThreadPool() const {
     return threadPool;
 }
 
-// 同步单个参与者, 使用leaderData
+/* 同步协议: 同步单个参与者, 使用leaderData
+ * CoServer to PaServer: SET ${KVDB_sync_one} "maxIndex_syncSize"
+ * PaServer to CoServer: SET ${KVDB_sync_one} "OK"
+ * loop: size = syncSize
+ *      CoServer to PaServer: SET ${key} "${value}"
+ *      PaServer to CoServer: SET SYNC_STATUS "1"
+ *
+ *  例子:
+ *  C to P: SET ${KVDB_sync_one} "5_3", 5代表当前日志的索引, 3代表数据库有3个数据需要更新
+ *  P to C: SET ${KVDB_sync_one} "OK", 代表正确接收 KVDB_sync_one 的请求
+ *  然后循环3次, 因为 syncSize = 3:
+ *      C to P: SET a "value", 将 a 设置成 "value" 值
+ *      SET SYNC_STATUS "1", 表示同步成功
+ */
 void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex) {
     std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
     std::vector<std::string> newLeaderData = leaderData;
