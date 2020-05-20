@@ -151,7 +151,9 @@ void CoServer::initPaSrver() {
         idx++;
         if (!p->isAlive) continue;
         // TODO: 一个编译错误, 为什么不可以这样调用??????? fuck!!!
-        std::thread handleSync(&CoServer::getLatestIndex, this, p, &waitSyncGroup, idx, result);
+        std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
+            this->getLatestIndex(p, &waitSyncGroup, idx, result);
+        });
         handleSync.detach();
     }
     waitSyncGroup.Wait();
@@ -305,6 +307,7 @@ void CoServer::test1(Participant *p) {
 // 获取一个 p 最新的 操作(日志)索引
 void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
     LOG_F(INFO, "Trying to get Lastest index");
+
 
 //    waitGroup.Done();
 }
