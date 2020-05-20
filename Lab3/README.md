@@ -4,7 +4,7 @@
 
 ![](assets/cpp.svg) ![](assets/support.svg)
 
-A two-stage commit project implemented in C + +. A simple key value distributed database is implemented
+A two-phase commit project implemented in C + +. A simple key value distributed database is implemented
 
 
 
@@ -93,3 +93,9 @@ P to C: SET ${KVDB_sync_one} "OK", 代表正确接收 KVDB_sync_one 的请求
 
 
 
+
+
+
+## test.sh bug
+
+每次执行完进程还在后台运行, 没有被杀死, 导致要手动关掉后台进程. 否则会出现端口占用问题.
