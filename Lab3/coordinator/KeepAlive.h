@@ -16,7 +16,7 @@ class KeepAlive {
 public:
     //using Participants = std::vector<Participant>;
     using Munites = std::chrono::minutes;
-    KeepAlive(){}
+
     KeepAlive(int checkInterval, int invalidInterval)
             : checkInterval{checkInterval}, invalidInterval{invalidInterval} {
     }
@@ -30,10 +30,10 @@ private:
 
     static bool connectLostPa(Participant *p);
 
-    void sendAndRecv(Participant *p);
+    static void sendAndRecv(Participant *p);
 
 private:
-    int checkInterval;
+    int checkInterval{};
     Munites invalidInterval{}; // 判定失效间隔
     volatile bool Finished{false};
 };

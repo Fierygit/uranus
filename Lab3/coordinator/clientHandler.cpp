@@ -32,14 +32,14 @@ void clientAcceptHandler(CoServer *coServer) {
 
         // 暂时 值传递， 怕内存泄漏
         //创建一个子的线程全程处理， 新的 client 的 io，读完之后， 放到 blockingqueue
-        Client client{clientSocket, clientAddr, true, ""};
+        Client client{clientSocket, clientAddr, ""};
 
         std::thread tmpThread{[coServer, client] {
             clientReadHandler(SubClientContex{coServer, client});
         }};
         tmpThread.detach();
     }
-    LOG_F(ERROR, "should not be run here");
+    //LOG_F(ERROR, "should not be run here");
 }
 
 /**

@@ -11,8 +11,55 @@
 #include "clientHandler.h"
 #include "../common/Util.h"
 #include "../common/WaitGroup.h"
+#include "syncDataHandler.h"
+#include "participantHandler.h"
 #include <arpa/inet.h>
 
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
+CoServer::CoServer(std::string ip, int port) :
+        port(port),
+        ip(std::move(ip)),
+        tastNodes(new BoundedBlockingQueue<TaskNode>()),
+        threadPool(new uranus::ThreadPool(3)),
+        needSyncData(false),
+        keepAlive(new KeepAlive(6, 12)) {}
+#pragma clang diagnostic pop
+
+
+
+
+CoServer::~CoServer() {
+    {
+        LOG_F(INFO, "is over but just dont delete all source");
+    }
+}
+
+CoServer &CoServer::init() {
+
+    // 同步初始化自己的服务
+    initCoSrver();
+
+    // 同步连接所有的 participant,
+    initPaSrver();
+
+    // 同步KV数据库
+    std::thread{[&] { syncKVDB(participants); }}.detach();
+
+    // 创建子线程接受新的 client 连接
+    std::thread{[this] { clientAcceptHandler(this); }}.detach();
+
+    // 初始化心跳包
+    this->keepAlive->init(participants, needSyncData, threadPool);
+
+    LOG_F(INFO, "init over");
+    return *this;
+}
+
+
+// 核心代码
 void CoServer::run() {
     for (;;) {
         // loguru::shutdown();
@@ -46,10 +93,10 @@ void CoServer::run() {
         }
 
         int pc1 = 0;
-        // 1、 第一阶段，提交请求命令给particitans**************************************************
+        // 1、 第一阶段，提交请求命令给 participants **************************************************
         // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
 
-        this->send2PaSync(commandStr);// 同步发送------------------------------------------------
+        send2PaSync(commandStr, participants, threadPool);// 同步发送------------------------------------------------
         LOG_F(INFO, "1 phase send over !");
         for (Participant *p : participants) {
             if (!p->isAlive) continue;
@@ -67,7 +114,7 @@ void CoServer::run() {
             std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
             LOG_F(INFO, "2 phase msg: %s", Util::outputProtocol(msg).c_str());
 
-            this->send2PaSync(msg);// 同步发送------------------------------------------------------
+            send2PaSync(msg, participants, threadPool);// 同步发送------------------------------------------------------
             for (Participant *p : participants) {
                 if (p->pc1Reply.stateCode != SUCCESS) {
                     pc2 = 1;
@@ -75,9 +122,11 @@ void CoServer::run() {
             }
         } else {
             std::string msg = Util::Encoder("SET ${key} \"${abort}\"");
-            this->send2PaSync(msg);
+            send2PaSync(msg, participants, threadPool);
             pc2 = 1;
         }
+
+        // back ot client ----------------------------------------------------------
         if (pc2 == 0) {
             std::string rep{"SUCCESS!"};
             if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
@@ -145,73 +194,8 @@ void CoServer::initPaSrver() {
     waitGroup.Wait();
 }
 
+
 /**
- * 将发送数据放入线程池中， 用 waitgroup 等待， 当接受到所有的返回时， 处理返回情况
- *
- */
-
-// 发消息，返回的结果
-void CoServer::send2PaSync(std::string msg) {
-    LOG_F(INFO, "before msg send");
-    WaitGroup waitGroup;
-    int alive_cnt = 0;
-    for (auto p: participants) {
-        if (p->isAlive) {
-            alive_cnt += 1;
-        }
-    }
-
-
-    // 如果发送不了，直接返回错误， 然后执行abort
-    waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
-    for (Participant *p : participants) {
-        if (!p->isAlive) continue;
-        this->threadPool->addTask([p, &msg, &waitGroup] {//
-            {// 锁的作用域, RAII
-                p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
-                std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
-                //发数据
-                if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
-                    p->pc1Reply.stateCode = 2; //发送失败
-                    LOG_F(WARNING, "participant %d send error!!!", p->port);
-                    goto end;
-                } else {            //发送完等待接受
-                    LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
-                    int rc = Util::recvByTime(p->fd, 3); //设置定时器
-                    if (rc < 0) {
-                        LOG_F(ERROR, "select error!!!! I dont know what happen");
-                        return;
-                    } else if (rc == 0) { // 超时不鸟人
-                        LOG_F(INFO, "ip: %s\tport: %d\t dont reply??????????????", p->ip.c_str(), p->port);
-                        p->pc1Reply.stateCode = 1; // abort 但是不挂pa
-                    } else {
-                        char buf[BUFSIZ];  //数据传送的缓冲区
-                        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-                        buf[len] = '\0';
-                        if (len <= 0) { // 如果co 挂了
-                            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-                            p->pc1Reply.stateCode = 1; //接受挂了
-                            p->isAlive = false;
-                            goto end;
-                        }
-                        //std::cout << buf << std::endl;
-                        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-                        Command command = Util::Decoder(buf);
-                        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                              command.op, command.key.c_str(), command.value.c_str());
-                    }
-                }
-                end:;// 释放锁
-                waitGroup.Done(); // 结束喽！！！！！！
-            }
-        });
-    }
-//     把下面这个注释掉就可以返回了, 否则没有返回值
-    waitGroup.Wait();  //等待所有的结果
-}
-
-
-/*
  * 初始化的时候出错直接停止， 不算容错范围
  */
 
@@ -244,26 +228,9 @@ void CoServer::initCoSrver() {
     LOG_F(INFO, "start to listen !!!");
 }
 
-CoServer &CoServer::init() {
 
-    // 同步初始化自己的服务
-    initCoSrver();
 
-    // 同步连接所有的 participant,
-    initPaSrver();
-
-    // 同步KV数据库
-    std::thread{[this] { this->syncKVDB(); }}.detach();
-
-    // 创建子线程接受新的 client 连接
-    std::thread{[this] { clientAcceptHandler(this); }}.detach();
-
-    // 初始化心跳包
-    this->keepAlive->init(participants, needSyncData, threadPool);
-
-    LOG_F(INFO, "init over");
-    return *this;
-}
+// setter  and   getter------------------------------------------------------------
 
 int CoServer::getServerSockfd() const {
     return serverSockfd;
@@ -277,241 +244,11 @@ BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
 void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &parts) {
     for (const auto &p: parts) {
         auto *tmp = new Participant();
-        tmp->ip = p.first, tmp->port = atoi(p.second.c_str());
+        tmp->ip = p.first, tmp->port = atoi(p.second.c_str()); // NOLINT(cert-err34-c)
         LOG_F(INFO, "add participant(ip: %s, port: %s)", p.first.c_str(), p.second.c_str());
         this->participants.push_back(tmp);
     }
 }
 
 
-CoServer::~CoServer() {
-    {
-        LOG_F(INFO, "is over but just dont delete all source");
-    }
-}
 
-int CoServer::getAliveCnt() {
-    int wait_cnt = 0;
-    for (const auto &p: participants) {
-        if (p->isAlive) {
-            wait_cnt++;
-        }
-    }
-    return wait_cnt;
-}
-
-// 获取一个 p 最新的 操作(日志)索引
-void CoServer::getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
-    LOG_F(INFO, "Trying to get Lastest index");
-
-    // 协议
-    std::string msg = Util::Encoder("GET \"${LatestIndex}\"");
-
-    std::unique_lock<std::mutex> uniqueLock(p->lock); // 获取锁
-    if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
-        LOG_F(WARNING, "participant %d send error!!!", p->port);
-    } else {            //发送完等待接受
-        LOG_F(INFO, "participant %d send \"GET \"${LatestIndex}\" success. waiting for receive...", p->port);
-        char buf[BUFSIZ];  //数据传送的缓冲区
-        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-        buf[len] = '\0';
-        if (len <= 0) { // 如果co 挂了
-            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-        }
-        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-        Command command = Util::Decoder(buf);
-
-        if (command.op == SET && command.key == "${LatestIndex}") {
-            LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                  command.op, command.key.c_str(), command.value.c_str());
-            // 保存结果
-            p->lastIndex = atoi(command.value.c_str());
-            LOG_F(INFO, "set %s:%d latestIndex: %d", p->ip.c_str(), p->port, p->lastIndex);
-            result[idx] = atoi(command.value.c_str());
-        }
-    }
-}
-
-// 同步数据库
-void CoServer::syncKVDB() {
-    WaitGroup waitSyncGroup;
-    LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
-    //todo 中途有新的 p 加入进来怎么办？？？？？？？？？？？？？？？？
-    waitSyncGroup.Add(this->getAliveCnt());
-    std::vector<int> result(participants.size());
-    int idx = -1;
-    for (Participant *p: participants) {
-        idx++;
-        if (!p->isAlive) continue;
-        // 注意用法
-        std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
-            this->getLatestIndex(p, &waitSyncGroup, idx, result);
-            waitSyncGroup.Done();
-        });
-        handleSync.detach();
-    }
-    waitSyncGroup.Wait();
-
-    // 打印 LOG信息, 获取最大索引
-    int maxLogIndex = 0, maxIndex = -1;
-    for (int i = 0; i < participants.size(); i++) {
-        if (!participants[i]->isAlive) continue;
-        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port,
-              participants[i]->lastIndex);
-        if (maxLogIndex < participants[i]->lastIndex) {
-            maxLogIndex = participants[i]->lastIndex;
-            maxIndex = i;
-        }
-    }
-    // 获取leader
-    if (maxIndex != -1) {
-        Participant *mainPart = participants[maxIndex];
-        LOG_F(INFO, "maxLogIndex: %d, max part: (%s:%d)", maxLogIndex, mainPart->ip.c_str(), mainPart->port);
-        // 开始查找需要进行同步的参与者
-        std::vector<Participant *> toSyncParts;
-        for (int i = 0; i < participants.size(); i++) {
-            if (!participants[i]->isAlive) continue;
-            if (maxLogIndex > participants[i]->lastIndex) {
-                toSyncParts.emplace_back(participants[i]);
-                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port,
-                      participants[i]->lastIndex);
-            }
-        }
-        if (toSyncParts.empty()) {
-            LOG_F(INFO, "nothing to sync ...");
-        } else {
-            LOG_F(INFO, "%s", (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
-            // 首先获得 leader(假设) 的数据库信息
-            std::vector<std::string> leaderData = getLeaderData(mainPart);
-            for (auto s: leaderData) {
-                LOG_F(INFO, "leaderData: %s", Util::outputProtocol(s).c_str());
-            }
-
-            // 然后使用多线程将它同步给每个缺失信息的数据库
-            for (auto &p: toSyncParts) {
-                std::thread handleOneSync([this, p, leaderData, maxLogIndex] {
-                    LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
-                    this->syncOnePart(p, leaderData, maxLogIndex);
-                });
-                handleOneSync.detach();
-            }
-        }
-    } else {
-        LOG_F(INFO, "nothing to sync ...");
-    }
-}
-
-/* 协议: 获取leader的全部数据, 用来同步那些落后的参与者
- * C to P: GET "${KVDB}"
- * P to C: SET ${KVDB_cnt} "${KVDB.size()}"
- */
-std::vector<std::string> CoServer::getLeaderData(Participant* p) {
-    std::vector<std::string> leaderData;
-    // 协议, 获取整个KVDB
-    std::string msg = Util::Encoder("GET \"${KVDB}\"");
-
-    std::unique_lock<std::mutex> uniqueLock(p->lock); // 获取锁
-    if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
-        LOG_F(WARNING, "participant %d send error!!!", p->port);
-    } else {            //发送完等待接受
-        LOG_F(INFO, "participant %d send \"GET \"${KVDB}\" success. waiting for receive...", p->port);
-        char buf[BUFSIZ];  //数据传送的缓冲区
-        // 先接受 长度, 再根据长度接收所有的数据
-        int KVDB_cnt = 0;
-
-        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-        buf[len] = '\0';
-        if (len <= 0) { // 如果co 挂了
-            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-        }
-        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-        Command command = Util::Decoder(buf);
-        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-              command.op, command.key.c_str(), command.value.c_str());
-
-        // 数量
-        if (command.op == SET && command.key == "${KVDB_cnt}") {
-            // 保存结果
-            KVDB_cnt = atoi(command.value.c_str());
-            LOG_F(INFO, ("KVDB_cnt : " + std::to_string(KVDB_cnt)).c_str());
-
-            while (KVDB_cnt--) {
-                // 获取下一个
-                std::string msg = Util::Encoder("GET \"${KVDB_next}\"");
-                LOG_F(INFO, "to send: %s", Util::outputProtocol(msg).c_str());
-                if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
-                    LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
-                } else {
-                    int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-                    buf[len] = '\0';
-                    if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-                    }
-                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-                    Command command = Util::Decoder(buf);
-                    LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                          command.op, command.key.c_str(), command.value.c_str());
-
-                    leaderData.emplace_back(buf);
-                }
-            }
-        }
-    }
-    return leaderData;
-}
-
-const Participants &CoServer::getParticipants() const {
-    return participants;
-}
-
-
-uranus::ThreadPool *CoServer::getThreadPool() const {
-    return threadPool;
-}
-
-/* 同步协议: 同步单个参与者, 使用leaderData
- * CoServer to PaServer: SET ${KVDB_sync_one} "maxIndex_syncSize"
- * PaServer to CoServer: SET ${KVDB_sync_one} "OK"
- * loop: size = syncSize
- *      CoServer to PaServer: SET ${key} "${value}"
- *      PaServer to CoServer: SET SYNC_STATUS "1"
- *
- *  例子:
- *  C to P: SET ${KVDB_sync_one} "5_3", 5代表当前日志的索引, 3代表数据库有3个数据需要更新
- *  P to C: SET ${KVDB_sync_one} "OK", 代表正确接收 KVDB_sync_one 的请求
- *  然后循环3次, 因为 syncSize = 3:
- *      C to P: SET a "value", 将 a 设置成 "value" 值
- *      SET SYNC_STATUS "1", 表示同步成功
- */
-void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex) {
-    std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
-    std::vector<std::string> newLeaderData = leaderData;
-    LOG_F(INFO, "(%s:%d) doing syncOnePart ...", p->ip.c_str(), p->port);
-
-    // 加入了索引信息
-    std::string msg = Util::Encoder(
-            "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
-//    std::cout << "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"" << std::endl;
-//    LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
-    newLeaderData.insert(newLeaderData.begin(), msg);
-    char buf[BUFSIZ];  //数据传送的缓冲区
-
-    for (const auto &msg: newLeaderData) {
-        LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
-        if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
-            LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
-        } else {
-            int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-            buf[len] = '\0';
-            if (len <= 0) { // 如果co 挂了
-                LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-            }
-            LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-            Command command = Util::Decoder(buf);
-            LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                  command.op, command.key.c_str(), command.value.c_str());
-        }
-    }
-
-    LOG_F(INFO, "end: sync for (%s:%d)", p->ip.c_str(), p->port);
-}
