@@ -251,6 +251,3 @@ void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &
         this->participants.push_back(tmp);
     }
 }
-
-
-

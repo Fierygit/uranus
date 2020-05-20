@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# 接受 命令行的两个参数
+
 LAB3_PATH="$1"
 PASSWORD="$2"
 
 
 
 # ######################################################################
-#todo 这个ip有用吗？
+
 COORDINATOR_IP=192.168.66.101
 COORDINATOR_PORT=8001
 NC_TIMEOUT=3
@@ -104,7 +104,7 @@ function set_virtual_nics_delay
 	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:3 root netem delay ${DELAY}ms
 }
 
-function set_virtual_nics_delay
+function set_virtual_nics_packet_loss
 {
 	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:0 root netem loss ${PACKET_LOSS_RATE}%
 	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:1 root netem loss ${PACKET_LOSS_RATE}%
@@ -122,7 +122,7 @@ function init_network_env
 	# check_netcat
 	add_virtual_nics
 	set_virtual_nics_delay
-	set_virtual_nics_delay
+	set_virtual_nics_packet_loss
 }
 
 
@@ -166,7 +166,7 @@ function language_checking
 	java_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/*.java 2>/dev/null | wc -l`
 	jar_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/kvstore2pcsystem.jar 2>/dev/null | wc -l`
 	c_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/*.c 2>/dev/null | wc -l`
-	cpp_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/*.cc 2>/dev/null | wc -l`
+	cpp_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/*.cc *.cpp *.hpp 2>/dev/null | wc -l`
 	python_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/*.py 2>/dev/null | wc -l`
 	kvstore2pcsystem_py_file_counter=`ls -1 ${LAB3_ABSOLUTE_PATH}/kvstore2pcsystem.py 2>/dev/null | wc -l`
 
@@ -214,7 +214,7 @@ function language_checking
 function run_kvstore2pcsystem_c_and_other_language_robustly
 {
 	chmod 777 ${LAB3_ABSOLUTE_PATH}/*
-
+	
 	for (( i=0; i<$START_RETYR_TIMES; i++ ))
 	do
 		${LAB3_ABSOLUTE_PATH}/kvstore2pcsystem --config_path ${coordinator_config_path} &
@@ -430,7 +430,7 @@ function run_kvstore2pcsystem_robustly
 			if [ $retval -eq $SUCCESS ]
 			then
 				return $SUCCESS
-			else
+			else 
 				return $FAIL
 			fi
 		else
@@ -472,7 +472,7 @@ function kill_and_restart_coordinator_robustly
 	echo "Kill coordinator and then restart."
 
 	kill -9 ${coordinator_pid}
-
+	sleep 1
 	run_kvstore2pcsystem_robustly START_COORDINATOR_ONLY
 
 	retval=$?
@@ -680,6 +680,7 @@ function test_item2
 printf -v standard_item3 "*1\r\n\$11\r\nitem3_value\r\n"
 function test_item3
 {
+	set_tag
 	echo "---------------------------------- Test item 3 ----------------------------------"
 	echo "Test item 3. Test point: Get the value of key."
 	# restart_kvstore2pcsystem_if_down_abnormally
@@ -700,7 +701,7 @@ function test_item3
 }
 
 
-standard_item4=$standard_nil
+standard_item4="$standard_nil"
 function test_item4
 {
 	set_tag

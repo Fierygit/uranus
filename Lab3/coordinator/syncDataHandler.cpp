@@ -7,6 +7,7 @@
 #include "syncDataHandler.h"
 #include "../common/Util.h"
 
+// 获取参与者中或者的数量
 int getAliveCnt(Participants& participants) {
     int wait_cnt = 0;
     for (const auto &p: participants) {
@@ -17,7 +18,15 @@ int getAliveCnt(Participants& participants) {
     return wait_cnt;
 }
 
-// 同步数据库
+/* 同步数据库
+ * 先调用 getLatestIndex 查看是否有数据库落下
+ * 如果没有:
+ *      退出
+ * 否则:
+ *      调用 getLeaderData 获得可以作为 主参与者 的数据
+ *      对每个 需要sync的参与者:
+ *          调用 syncOnePart
+ */
 void syncKVDB(Participants & participants) {
     WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", getAliveCnt(participants));
@@ -88,7 +97,12 @@ void syncKVDB(Participants & participants) {
 
 
 
-// 获取一个 p 最新的 操作(日志)索引
+/* 获取一个 p 最新的 操作(日志)索引
+ * C to P: GET "${LatestIndex}"
+ * P to C: SET ${LatestIndex} ${value}  // ${value} 代表p的 latestIndex
+ *
+ * 写入到 p->lastIndex
+ */
 void getLatestIndex(Participant *p, int idx, std::vector<int> &result) {
     LOG_F(INFO, "Trying to get Lastest index");
 
@@ -123,6 +137,11 @@ void getLatestIndex(Participant *p, int idx, std::vector<int> &result) {
 /* 协议: 获取leader的全部数据, 用来同步那些落后的参与者
  * C to P: GET "${KVDB}"
  * P to C: SET ${KVDB_cnt} "${KVDB.size()}"
+ * loop: size = KVDB.size():
+ *      C to P: GET "${KVDB_next}"
+ *      P to C: Encoder(SET item.first "item.second")  // item is a (key, value) in KVDB
+ *
+ * save Data to std::vector<std::string> leaderData;
  */
 std::vector<std::string> getLeaderData(Participant *p) {
     std::vector<std::string> leaderData;
