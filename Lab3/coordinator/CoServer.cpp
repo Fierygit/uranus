@@ -298,6 +298,27 @@ void CoServer::test1(Participant *p) {
 void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
     LOG_F(INFO, "Trying to get Lastest index");
 
+    // 协议
+    std::string msg = Util::Eecoder("GET \"${LatestIndex}\"");
 
-//    waitGroup.Done();
+    std::unique_lock<std::mutex> uniqueLock(p->lock); // 获取锁
+    if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
+        LOG_F(WARNING, "participant %d send error!!!", p->port);
+    } else {            //发送完等待接受
+        LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
+        char buf[BUFSIZ];  //数据传送的缓冲区
+        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+        buf[len] = '\0';
+        if (len <= 0) { // 如果co 挂了
+            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+            goto end;
+        }
+        //std::cout << buf << std::endl;
+        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+        Command command = Util::Decoder(buf);
+        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+              command.op, command.key.c_str(), command.value.c_str());
+    }
+
+    waitGroup->Done();
 }
