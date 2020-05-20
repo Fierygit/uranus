@@ -67,7 +67,7 @@ public:
 
     int getServerSockfd() const;
     void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
-    void test1(Participant *p);
+    void syncKVDB();
 
 /*
  * 系统信息

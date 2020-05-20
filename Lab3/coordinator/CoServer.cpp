@@ -143,20 +143,8 @@ void CoServer::initPaSrver() {
     }
     waitGroup.Wait();
 
-    WaitGroup waitSyncGroup;
-    waitSyncGroup.Add(this->getAliveCnt());
-    std::vector<int> result(participants.size());
-    int idx = -1;
-    for (Participant * p: participants) {
-        idx++;
-        if (!p->isAlive) continue;
-        // TODO: 一个编译错误, 为什么不可以这样调用??????? fuck!!!
-        std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
-            this->getLatestIndex(p, &waitSyncGroup, idx, result);
-        });
-        handleSync.detach();
-    }
-    waitSyncGroup.Wait();
+    // 同步KV数据库
+    this->syncKVDB();
 }
 
 /**
@@ -300,35 +288,84 @@ int CoServer::getAliveCnt() {
     return wait_cnt;
 }
 
-void CoServer::test1(Participant *p) {
-    std::cout << 1 << std::endl;
-}
-
 // 获取一个 p 最新的 操作(日志)索引
 void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
     LOG_F(INFO, "Trying to get Lastest index");
 
     // 协议
-    std::string msg = Util::Eecoder("GET \"${LatestIndex}\"");
+    std::string msg = Util::Encoder("GET \"${LatestIndex}\"");
 
     std::unique_lock<std::mutex> uniqueLock(p->lock); // 获取锁
     if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
         LOG_F(WARNING, "participant %d send error!!!", p->port);
     } else {            //发送完等待接受
-        LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
+        LOG_F(INFO, "participant %d send \"GET \"${LatestIndex}\" success. waiting for receive...", p->port);
         char buf[BUFSIZ];  //数据传送的缓冲区
         int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
         buf[len] = '\0';
         if (len <= 0) { // 如果co 挂了
             LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-            goto end;
         }
-        //std::cout << buf << std::endl;
         LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
         Command command = Util::Decoder(buf);
         LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
               command.op, command.key.c_str(), command.value.c_str());
-    }
 
-    waitGroup->Done();
+        if (command.op == SET && command.key == "${LatestIndex}") {
+            // 保存结果
+            result[idx] = atoi(command.value.c_str());
+        }
+    }
+}
+
+void CoServer::syncKVDB() {
+    WaitGroup waitSyncGroup;
+    waitSyncGroup.Add(this->getAliveCnt());
+    std::vector<int> result(participants.size());
+    int idx = -1;
+    for (Participant * p: participants) {
+        idx++;
+        if (!p->isAlive) continue;
+        // TODO: 一个编译错误, 为什么不可以这样调用??????? fuck!!!
+        std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
+            this->getLatestIndex(p, &waitSyncGroup, idx, result);
+            waitSyncGroup.Done();
+        });
+        handleSync.detach();
+    }
+    waitSyncGroup.Wait();
+
+    // 打印 LOG信息, 获取最大索引
+    int maxLogIndex = 0, maxIndex = -1;
+    for (int i = 0; i < participants.size(); i++) {
+        if (!participants[i]->isAlive) continue;
+        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, result[i]);
+        if (maxLogIndex < result[i]) {
+            maxLogIndex = result[i];
+            maxIndex = i;
+        }
+    }
+    if (maxIndex != -1) {
+        Participant* mainPart = participants[maxIndex];
+        std::vector<Participant*> toSyncParts;
+        for (int i = 0; i < participants.size(); i++) {
+            if (!participants[i]->isAlive) continue;
+            if (maxLogIndex > result[i]) {
+                toSyncParts.emplace_back(participants[i]);
+                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, result[i]);
+            }
+        }
+        if (toSyncParts.size() == 0) {
+            LOG_F(INFO, "nothing to sync ...");
+        } else {
+            LOG_F(INFO, (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
+            // 首先获得 leader(假设) 的数据库信息
+//            std::string leader = getLeaderData(mainPart);
+
+
+            // 然后使用多线程将它同步给每个缺失信息的数据库
+        }
+    } else {
+        LOG_F(INFO, "nothing to sync ...");
+    }
 }

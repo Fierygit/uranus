@@ -22,6 +22,8 @@ const int PRE_PHASE1 = 0;
 const int AFTER_PHASE1 = 1;
 
 PaServer &PaServer::init() {
+    // 日志索引初始化
+    latestIndex = 0;
     LOG_F(INFO, ":ip %s, port: %d", ip.c_str(), port);
 
     serverAddr.sin_family = PF_INET;    //设置为IP通信
@@ -102,45 +104,57 @@ void PaServer::handleCoor(int clientSocket) {
         LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
               command.value.c_str());
 
+        // 执行命令且成功
+        bool command_run = true;
         std::string send_msg;
 
-        // 1phase之前, 可以处理
-        if (status == PRE_PHASE1) {
-            // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
-            if (command.op < 0 || command.op > 2) {
-                send_msg = "SET STATUS \"0\"";
-            } else {
-                // 合法返回成功
-                send_msg = "SET STATUS \"1\"";
-            }
-            command_1phase = command;
-        } else if (status == AFTER_PHASE1) {  // 如果已经进入了 1phase, 等待2phase
-            // 首先判断命令是否合法
-            std::string val;
-            if (command.op == 1 && command.key == "${key}" && command.value == "${commit}") {
-                // 要求提交
-                if (command_1phase.op == SET) {  // SET == 1
-                    KVDB[command_1phase.key] = command_1phase.value;
+        // 添加返回索引功能
+        if (command.op == GET && command.key == "${LatestIndex}") {
+            LOG_F(INFO, "CoServer: GET \"${LatestIndex}\"");
+            send_msg = "SET ${LatestIndex} \"" + std::to_string(this->latestIndex) + "\"";
+            command_run = false;
+
+        } else {
+            // 1phase之前, 可以处理
+            if (status == PRE_PHASE1) {
+                // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
+                if (command.op < 0 || command.op > 2) {
+                    send_msg = "SET STATUS \"0\"";
+                } else {
+                    // 合法返回成功
                     send_msg = "SET STATUS \"1\"";
-                } else if (command_1phase.op == GET) {  // GET == 0
-                    if (KVDB.count(command_1phase.key) == 0) {
-                        // 没有这个值
+                }
+                command_1phase = command;
+            } else if (status == AFTER_PHASE1) {  // 如果已经进入了 1phase, 等待2phase
+                // 首先判断命令是否合法
+                std::string val;
+                if (command.op == 1 && command.key == "${key}" && command.value == "${commit}") {
+                    // 要求提交
+                    if (command_1phase.op == SET) {  // SET == 1
+                        KVDB[command_1phase.key] = command_1phase.value;
+                        send_msg = "SET STATUS \"1\"";
+                    } else if (command_1phase.op == GET) {  // GET == 0
+                        if (KVDB.count(command_1phase.key) == 0) {
+                            // 没有这个值
+                            send_msg = "SET STATUS \"0\"";
+                        } else {
+                            val = KVDB[command_1phase.key];
+                            send_msg = "SET ${val} " + std::string("\"" + val + "\"");
+                        }
+                    } else if (command_1phase.op == DEL) {  // DEL == 2
+                        KVDB.erase(command_1phase.key);
+                        send_msg = "SET STATUS \"1\"";
+                    } else {  // 命令不合法
                         send_msg = "SET STATUS \"0\"";
-                    } else {
-                        val = KVDB[command_1phase.key];
-                        send_msg = "SET ${val} " + std::string("\"" + val + "\"");
                     }
-                } else if (command_1phase.op == DEL) {  // DEL == 2
-                    KVDB.erase(command_1phase.key);
-                    send_msg = "SET STATUS \"1\"";
-                } else {  // 命令不合法
+                } else {
+                    // 要求终止
                     send_msg = "SET STATUS \"0\"";
                 }
-            } else {
-                // 要求终止
-                send_msg = "SET STATUS \"0\"";
             }
         }
+
+
         LOG_F(INFO, "to send: %s", send_msg.c_str());
         // 统一发送
         send_msg = Util::Encoder(send_msg);
@@ -149,14 +163,18 @@ void PaServer::handleCoor(int clientSocket) {
             LOG_F(ERROR, "part send error !");
         }
 
-        if (status == PRE_PHASE1) {
-            status = AFTER_PHASE1;
-            LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
-        } else if (status == AFTER_PHASE1) {
-            status = PRE_PHASE1;
-            LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");
+        // 如果是执行普通的命令, 需要跳转状态
+        if (command_run) {
+            if (status == PRE_PHASE1) {
+                status = AFTER_PHASE1;
+                LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
+            } else if (status == AFTER_PHASE1) {
+                status = PRE_PHASE1;
+                this->latestIndex += 1;
+                LOG_F(INFO, "NOTE: this->latestIndex += 1, latestIndex: %d", this->latestIndex);
+                LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");
+            }
         }
-
     }
 }
 
