@@ -20,7 +20,7 @@ add_executable(kvstore2pcsystem
         common/Config.h
         common/ThreadPool.h
         common/ThreadPool.cpp
-        )
+        coordinator/syncDataHandler.cpp)
 
 target_link_libraries(
         kvstore2pcsystem
@@ -46,6 +46,7 @@ add_executable(kvstore2pcsystemTEST2
         common/Config.h
         common/ThreadPool.h
         common/ThreadPool.cpp
+        coordinator/syncDataHandler.cpp
         )
 
 target_link_libraries(
@@ -66,7 +67,7 @@ add_executable(coordinator
         coordinator/participantHandler.h
         coordinator/participantHandler.cpp
         common/Util.h coordinator/KeepAlive.cpp coordinator/KeepAlive.h
-        common/ThreadPool.cpp)
+        common/ThreadPool.cpp coordinator/syncDataHandler.h coordinator/syncDataHandler.cpp)
 
 target_link_libraries(
         coordinator

@@ -24,7 +24,6 @@
 struct Client {
     int fd; // socket 的文件描述符
     sockaddr_in addr;
-    bool isAlive;
     std::string buf;
 };
 
@@ -36,16 +35,19 @@ public:
     CoServer() : CoServer("localhost", 8888) {}
 
     // 初始化地址就够了
-    CoServer(std::string ip, int port) :
-            port(port),
-            ip(std::move(ip)),
-            tastNodes(new BoundedBlockingQueue<TaskNode>()),
-            threadPool(new uranus::ThreadPool(3)),
-            needSyncData(false),
-            keepAlive(new KeepAlive(6, 12)){}
-            //keepAlive 一直放到最后
+    CoServer(std::string ip, int port);
+    //keepAlive 一直放到最后
 
     ~CoServer();
+
+private:
+
+    void initCoSrver();
+
+    void initPaSrver();
+
+    //int getAliveCnt();
+
 
 public:
     CoServer &init();
@@ -58,30 +60,20 @@ public:
     int getServerSockfd() const;
 
 private:
-    void initCoSrver();
 
-    void initPaSrver();
+    //void syncKVDB();
 
-    void send2PaSync(std::string msg);
+    //void syncOnePart(Participant *p, const std::vector<std::string> &leaderData, int maxIndex);
 
-private:
-    void syncKVDB();
-    void getLatestIndex(Participant *p);
-    std::vector<std::string> getLeaderData(Participant* p);
-    void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex);
+    // 里面存的东西可以变吗？？？？
 
-    int getAliveCnt();
-
-    const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
-    uranus::ThreadPool *getThreadPool() const;
-
-
-// 系统信息
+    // 系统信息
 public:
     using Clients = std::vector<Client>;
     using TaskNode = std::pair<Client, std::string>;
 
 public:
+
     BoundedBlockingQueue<TaskNode> *getTastNodes() const;
 
 
@@ -95,10 +87,14 @@ private:
 
     std::atomic<bool> needSyncData;
 
-    Clients clients;
+//  Clients clients;
 
     Participants participants;
-    //std::atomic<int> paNum; //活着多少个pa， 一个都没有返回false
+
+//  std::atomic<int> paNum; //活着多少个pa， 一个都没有返回false
+
+    // 心跳检测
+    KeepAlive *keepAlive;
 
 /*
  * 本服务器的信息
@@ -110,9 +106,7 @@ private:
     int serverSockfd;
     struct sockaddr_in serverAddr;   //服务器网络地址结构体
 
-private:
-    // 心跳检测
-    KeepAlive *keepAlive;
+
 };
 
 

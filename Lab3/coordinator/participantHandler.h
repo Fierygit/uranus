@@ -8,8 +8,7 @@
 #include "CoServer.h"
 #include "../common/loguru.hpp"
 
-
-void participantHandler(CoServer *);
+void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool *threadPool);
 
 
 #endif //LAB3_PARTICIPANTHANDLER_H
