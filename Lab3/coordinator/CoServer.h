@@ -66,8 +66,11 @@ public:
     void run();
 
     int getServerSockfd() const;
+
+private:
     void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
     void syncKVDB();
+    std::vector<std::string> getLeaderData(Participant* p);
 
 /*
  * 系统信息

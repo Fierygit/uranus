@@ -308,11 +308,13 @@ void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std
         }
         LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
         Command command = Util::Decoder(buf);
-        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-              command.op, command.key.c_str(), command.value.c_str());
 
         if (command.op == SET && command.key == "${LatestIndex}") {
+            LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                  command.op, command.key.c_str(), command.value.c_str());
             // 保存结果
+            p->lastIndex = atoi(command.value.c_str());
+            LOG_F(INFO, "set %s:%d latestIndex: %d", p->ip.c_str(), p->port, p->lastIndex);
             result[idx] = atoi(command.value.c_str());
         }
     }
@@ -320,13 +322,14 @@ void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std
 
 void CoServer::syncKVDB() {
     WaitGroup waitSyncGroup;
+    LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
     waitSyncGroup.Add(this->getAliveCnt());
     std::vector<int> result(participants.size());
     int idx = -1;
     for (Participant * p: participants) {
         idx++;
         if (!p->isAlive) continue;
-        // TODO: 一个编译错误, 为什么不可以这样调用??????? fuck!!!
+        // 注意用法
         std::thread handleSync([this, p, &waitSyncGroup, &idx, &result] {
             this->getLatestIndex(p, &waitSyncGroup, idx, result);
             waitSyncGroup.Done();
@@ -339,28 +342,29 @@ void CoServer::syncKVDB() {
     int maxLogIndex = 0, maxIndex = -1;
     for (int i = 0; i < participants.size(); i++) {
         if (!participants[i]->isAlive) continue;
-        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, result[i]);
-        if (maxLogIndex < result[i]) {
-            maxLogIndex = result[i];
+        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, participants[i]->lastIndex);
+        if (maxLogIndex < participants[i]->lastIndex) {
+            maxLogIndex = participants[i]->lastIndex;
             maxIndex = i;
         }
     }
     if (maxIndex != -1) {
         Participant* mainPart = participants[maxIndex];
+        LOG_F(INFO, "maxIndex: %d, max part: (%s:%d)", maxIndex, mainPart->ip.c_str(), mainPart->port);
         std::vector<Participant*> toSyncParts;
         for (int i = 0; i < participants.size(); i++) {
             if (!participants[i]->isAlive) continue;
-            if (maxLogIndex > result[i]) {
+            if (maxLogIndex > participants[i]->lastIndex) {
                 toSyncParts.emplace_back(participants[i]);
-                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, result[i]);
+                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, participants[i]->lastIndex);
             }
         }
-        if (toSyncParts.size() == 0) {
+        if (toSyncParts.empty()) {
             LOG_F(INFO, "nothing to sync ...");
         } else {
             LOG_F(INFO, (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
             // 首先获得 leader(假设) 的数据库信息
-//            std::string leader = getLeaderData(mainPart);
+            std::vector<std::string> leaderData = getLeaderData(mainPart);
 
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
@@ -368,4 +372,59 @@ void CoServer::syncKVDB() {
     } else {
         LOG_F(INFO, "nothing to sync ...");
     }
+}
+
+std::vector<std::string> CoServer::getLeaderData(Participant* p) {
+    std::vector<std::string> leaderData;
+    // 协议, 获取整个KVDB
+    std::string msg = Util::Encoder("GET \"${KVDB}\"");
+
+    std::unique_lock<std::mutex> uniqueLock(p->lock); // 获取锁
+    if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
+        LOG_F(WARNING, "participant %d send error!!!", p->port);
+    } else {            //发送完等待接受
+        LOG_F(INFO, "participant %d send \"GET \"${KVDB}\" success. waiting for receive...", p->port);
+        char buf[BUFSIZ];  //数据传送的缓冲区
+        // 先接受 长度, 再根据长度接收所有的数据
+        int KVDB_cnt = 0;
+
+        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+        buf[len] = '\0';
+        if (len <= 0) { // 如果co 挂了
+            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+        }
+        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+        Command command = Util::Decoder(buf);
+        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+              command.op, command.key.c_str(), command.value.c_str());
+
+        // 数量
+        if (command.op == SET && command.key == "${KVDB_cnt}") {
+            // 保存结果
+            KVDB_cnt = atoi(command.value.c_str());
+            LOG_F(INFO, ("KVDB_cnt : " + std::to_string(KVDB_cnt)).c_str());
+
+            while (KVDB_cnt--) {
+                // 获取下一个
+                std::string msg = Util::Encoder("GET \"${KVDB_next}\"");
+                LOG_F(INFO, "to send: %s", Util::outputProtocol(msg).c_str());
+                if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
+                    LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
+                } else {
+                    int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+                    buf[len] = '\0';
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+                    }
+                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+                    Command command = Util::Decoder(buf);
+                    LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                          command.op, command.key.c_str(), command.value.c_str());
+
+                    leaderData.emplace_back(buf);
+                }
+            }
+        }
+    }
+    return leaderData;
 }

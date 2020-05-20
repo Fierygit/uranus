@@ -113,8 +113,52 @@ void PaServer::handleCoor(int clientSocket) {
             LOG_F(INFO, "CoServer: GET \"${LatestIndex}\"");
             send_msg = "SET ${LatestIndex} \"" + std::to_string(this->latestIndex) + "\"";
             command_run = false;
+        }
+        else if (command.op == GET && command.key == "${KVDB}") {
+            LOG_F(INFO, "CoServer: request to sync data");
+            // 被同步数据
+            send_msg = "SET ${KVDB_cnt} \"" + std::to_string(this->KVDB.size()) + "\"";
+            command_run = false;
+            LOG_F(INFO, "to send: %s", send_msg.c_str());
+            // 统一发送
+            send_msg = Util::Encoder(send_msg);
+            LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
+            if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                LOG_F(ERROR, "part send error !");
+            } else {
+//                 在循环内发送数据
+//                 接一个反馈发一个数据
+                for (const auto& item: KVDB) {
+                    LOG_F(INFO, "waiting for GET ${KVDB_next} ...");
+                    int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
+                    buf[len] = '\0';
+                    LOG_F(INFO, "recv msg: %s", buf);
+                    // 一定要先处理
+                    if (len <= 0) { // 如果co 挂了
+                        LOG_F(WARNING, "connection closed!!!");
+                        break;
+                    }
 
-        } else {
+                    Command command = Util::Decoder(buf);
+                    LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
+                          command.value.c_str());
+
+                    if (command.op == GET && command.key == "${KVDB_next}") {
+                        send_msg = "SET " + item.first + " \"" + item.second + "\"";
+                        LOG_F(INFO, "to send: %s", send_msg.c_str());
+                        // 统一发送
+                        send_msg = Util::Encoder(send_msg);
+                        LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
+                        if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
+                            LOG_F(ERROR, "part send error !");
+                        }
+                    } else {
+                        LOG_F(ERROR, "GET ${KVDB_next} receive error");
+                    }
+                }
+            }
+        }
+        else {
             // 1phase之前, 可以处理
             if (status == PRE_PHASE1) {
                 // 首先判断命令是否合法(如是否是 2phase命令, 如果是那么抛弃)
@@ -161,18 +205,18 @@ void PaServer::handleCoor(int clientSocket) {
         LOG_F(INFO, "to send: %s", Util::outputProtocol(send_msg).c_str());
         if (send(clientSocket, send_msg.c_str(), send_msg.size(), 0) != send_msg.size()) {
             LOG_F(ERROR, "part send error !");
-        }
-
-        // 如果是执行普通的命令, 需要跳转状态
-        if (command_run) {
-            if (status == PRE_PHASE1) {
-                status = AFTER_PHASE1;
-                LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
-            } else if (status == AFTER_PHASE1) {
-                status = PRE_PHASE1;
-                this->latestIndex += 1;
-                LOG_F(INFO, "NOTE: this->latestIndex += 1, latestIndex: %d", this->latestIndex);
-                LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");
+        } else {
+            // 如果是执行普通的命令, 需要跳转状态
+            if (command_run) {
+                if (status == PRE_PHASE1) {
+                    status = AFTER_PHASE1;
+                    LOG_F(INFO, "status: PRE_PHASE1 -> AFTER_PHASE1");
+                } else if (status == AFTER_PHASE1) {
+                    status = PRE_PHASE1;
+                    this->latestIndex += 1;
+                    LOG_F(INFO, "NOTE: this->latestIndex += 1, latestIndex: %d", this->latestIndex);
+                    LOG_F(INFO, "status: AFTER_PHASE1 -> PRE_PHASE1");
+                }
             }
         }
     }
