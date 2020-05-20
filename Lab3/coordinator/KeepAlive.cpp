@@ -4,7 +4,6 @@
 
 #include <thread>
 #include "KeepAlive.h"
-#include "CoServer.h"
 #include "../common/loguru.hpp"
 
 

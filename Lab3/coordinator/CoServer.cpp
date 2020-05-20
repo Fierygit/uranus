@@ -13,7 +13,6 @@
 #include "../common/WaitGroup.h"
 #include <arpa/inet.h>
 
-
 void CoServer::run() {
     for (;;) {
         // loguru::shutdown();
@@ -143,6 +142,19 @@ void CoServer::initPaSrver() {
         });
     }
     waitGroup.Wait();
+
+    WaitGroup waitSyncGroup;
+    waitSyncGroup.Add(this->getAliveCnt());
+    std::vector<int> result(participants.size());
+    int idx = -1;
+    for (Participant * p: participants) {
+        idx++;
+        if (!p->isAlive) continue;
+        // TODO: 一个编译错误, 为什么不可以这样调用??????? fuck!!!
+        std::thread handleSync(&CoServer::getLatestIndex, this, p, &waitSyncGroup, idx, result);
+        handleSync.detach();
+    }
+    waitSyncGroup.Wait();
 }
 
 /**
@@ -269,8 +281,31 @@ void CoServer::setParticipant(std::vector<std::pair<std::string, std::string>> &
     }
 }
 
+
 CoServer::~CoServer() {
     {
         LOG_F(INFO, "is over but just dont delete all source");
     }
 }
+
+int CoServer::getAliveCnt() {
+    int wait_cnt = 0;
+    for (const auto& p: participants) {
+        if (p->isAlive) {
+            wait_cnt ++;
+        }
+    }
+    return wait_cnt;
+}
+
+void CoServer::test1(Participant *p) {
+    std::cout << 1 << std::endl;
+}
+
+// 获取一个 p 最新的 操作(日志)索引
+void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
+    LOG_F(INFO, "Trying to get Lastest index");
+
+//    waitGroup.Done();
+}
+

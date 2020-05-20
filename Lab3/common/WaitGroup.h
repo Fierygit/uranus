@@ -8,12 +8,13 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
+#include "../common/loguru.hpp"
 
 class WaitGroup {
 public:
     void Add(int incr = 1) {
         counter += incr;
-        LOG_F(INFO,"WaitGroup num : %d ", incr);
+        LOG_F(INFO, "WaitGroup num : %d ", incr);
     }
 
     void Done() {
