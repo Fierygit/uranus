@@ -42,7 +42,7 @@ public:
             tastNodes(new BoundedBlockingQueue<TaskNode>()),
             threadPool(new uranus::ThreadPool(3)),
             needSyncData(false),
-            keepAlive(new KeepAlive(5, 11)){}
+            keepAlive(new KeepAlive(6, 12)){}
             //keepAlive 一直放到最后
 
     ~CoServer();

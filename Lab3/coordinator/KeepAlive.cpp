@@ -18,7 +18,8 @@ void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+
+            std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
             keepaliveCheck(participants, needSyncData, poll);
         }
     }};
@@ -37,12 +38,15 @@ void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData
 void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *pool) {
     WaitGroup waitGroup;
     waitGroup.Add("keepAlive", participants.size());
+    //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
-        pool->addTask([p,&needSyncData,&pool,this,&waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
+        pool->addTask([p, &needSyncData, &pool, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII
+                //std::cout << "what the fuck\n";
                 std::unique_lock<std::mutex> tmpLock(p->lock); //warning
+                //std::cout << "what the fuck\n";
                 if (!p->isAlive) {// 挂了的尝试去连接一下
                     if (connectLostPa(p)) needSyncData = true;
                     goto end;  // 结束喽！！！！！！！！！！！！！！！！！！！！！！
@@ -67,12 +71,13 @@ void KeepAlive::sendAndRecv(Participant *p) {
     std::string keepAliveMsg{"hi"};
     int len = send(p->fd, keepAliveMsg.c_str(), keepAliveMsg.size(), 0);
     if (len != keepAliveMsg.size()) {                    // 错误处理！！！
-        LOG_F(ERROR, "keep alive send error");
+        LOG_F(ERROR, "ip: %s\tport: %d\tkeep alive send error", p->ip.c_str(), p->port);
         return;
     } else {
-        LOG_F(INFO, "send keep alive success!!!");
+        LOG_F(INFO, "ip: %s\tport: %d\t send keepalive success!!!", p->ip.c_str(), p->port);
     }
 
+    // 三秒钟给我回消息
     int rc = Util::recvByTime(p->fd, 3);
     if (rc < 0) {
         LOG_F(ERROR, "select error!!!! I dont know what happen");
@@ -83,7 +88,12 @@ void KeepAlive::sendAndRecv(Participant *p) {
         char buf[BUFSIZ];  //数据传送的缓冲区
         len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
         buf[len] = '\0';
-        if (len <= 0) return;
+        if (len <= 0) {     //这里是检测到关闭了， 上面是网络错误， 关闭了
+            p->isAlive = false;
+            close(p->fd);           // 这里检测关闭
+            LOG_F(INFO, "ip: %s\tport: %d\t closed or shutdown", p->ip.c_str(), p->port);
+            return;
+        }
         LOG_F(INFO, "ip: %s\tport: %d\t at last reply me : %s", p->ip.c_str(),
               p->port, Util::outputProtocol(buf).c_str());
         p->lastAlive = std::chrono::system_clock::now();// 重新活了！！！
@@ -103,7 +113,7 @@ bool KeepAlive::connectLostPa(Participant *p) {
         LOG_F(INFO, "socket error");
     }
     if (connect(tmpSocket, (struct sockaddr *) &remoteAddr, sizeof(struct sockaddr)) < 0) {
-        LOG_F(INFO, "connect error");
+        LOG_F(INFO, "ip: %s\tport: %d\t connect error", p->ip.c_str(), p->port);
     } else {
         p->fd = tmpSocket;    //更换 fd
         p->isAlive = true;

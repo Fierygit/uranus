@@ -38,6 +38,7 @@ void CoServer::run() {
             }
         }
 
+        // 这是设计错误， 万一一直没有数据， 就卡住了
         //################      stop the world      ############################################
         if (this->needSyncData) {
             LOG_F(INFO, "start sync the data");
@@ -166,31 +167,42 @@ void CoServer::send2PaSync(std::string msg) {
 
     // 如果发送不了，直接返回错误， 然后执行abort
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
-    for (Participant *&p : participants) {
+    for (Participant *p : participants) {
         if (!p->isAlive) continue;
-        this->threadPool->addTask([&] {//
+        this->threadPool->addTask([p,&msg,&waitGroup] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
+                //发数据
                 if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
                     p->pc1Reply.stateCode = 2; //发送失败
                     LOG_F(WARNING, "participant %d send error!!!", p->port);
                     goto end;
                 } else {            //发送完等待接受
                     LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
-                    char buf[BUFSIZ];  //数据传送的缓冲区
-                    int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-                    buf[len] = '\0';
-                    if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-                        p->pc1Reply.stateCode = 1; //接受挂了
-                        goto end;
+                    int rc = Util::recvByTime(p->fd, 3); //设置定时器
+                    if (rc < 0) {
+                        LOG_F(ERROR, "select error!!!! I dont know what happen");
+                        return;
+                    } else if (rc == 0) { // 超时不鸟人
+                        LOG_F(INFO, "ip: %s\tport: %d\t dont reply??????????????", p->ip.c_str(), p->port);
+                        p->pc1Reply.stateCode = 1; // abort 但是不挂pa
+                    }else {
+                        char buf[BUFSIZ];  //数据传送的缓冲区
+                        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+                        buf[len] = '\0';
+                        if (len <= 0) { // 如果co 挂了
+                            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+                            p->pc1Reply.stateCode = 1; //接受挂了
+                            p->isAlive = false;
+                            goto end;
+                        }
+                        //std::cout << buf << std::endl;
+                        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+                        Command command = Util::Decoder(buf);
+                        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                              command.op, command.key.c_str(), command.value.c_str());
                     }
-                    //std::cout << buf << std::endl;
-                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-                    Command command = Util::Decoder(buf);
-                    LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                          command.op, command.key.c_str(), command.value.c_str());
                 }
                 end:;// 释放锁
                 waitGroup.Done(); // 结束喽！！！！！！
@@ -237,15 +249,16 @@ void CoServer::initCoSrver() {
 
 CoServer &CoServer::init() {
 
-
+    // 同步初始化自己的服务
     initCoSrver();
+
+    // 同步连接所有的 participant,
+    initPaSrver();
+
 
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
-
-    // 同步连接 所有的 participant,
-    initPaSrver();
 
     this->keepAlive->init(participants,needSyncData,threadPool);
 
@@ -324,6 +337,7 @@ void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std
 void CoServer::syncKVDB() {
     WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", this->getAliveCnt());
+    //todo 中途有新的 p 加入进来怎么办？？？？？？？？？？？？？？？？
     waitSyncGroup.Add(this->getAliveCnt());
     std::vector<int> result(participants.size());
     int idx = -1;
@@ -365,8 +379,7 @@ void CoServer::syncKVDB() {
         if (toSyncParts.empty()) {
             LOG_F(INFO, "nothing to sync ...");
         } else {
-            // 存在参与者需要同步
-            LOG_F(INFO, (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
+            LOG_F(INFO,"%s", (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
             for (auto s: leaderData) {
