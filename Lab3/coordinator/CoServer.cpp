@@ -166,7 +166,7 @@ void CoServer::send2PaSync(std::string msg) {
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *p : participants) {
         if (!p->isAlive) continue;
-        this->threadPool->addTask([p,&msg,&waitGroup] {//
+        this->threadPool->addTask([p, &msg, &waitGroup] {//
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
@@ -184,7 +184,7 @@ void CoServer::send2PaSync(std::string msg) {
                     } else if (rc == 0) { // 超时不鸟人
                         LOG_F(INFO, "ip: %s\tport: %d\t dont reply??????????????", p->ip.c_str(), p->port);
                         p->pc1Reply.stateCode = 1; // abort 但是不挂pa
-                    }else {
+                    } else {
                         char buf[BUFSIZ];  //数据传送的缓冲区
                         int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
                         buf[len] = '\0';
@@ -253,16 +253,15 @@ CoServer &CoServer::init() {
     initPaSrver();
 
     // 同步KV数据库
-    threadPool->addTask([this] {this->syncKVDB();});
+    std::thread{[this] { this->syncKVDB(); }}.detach();
 
     // 创建子线程接受新的 client 连接
-    std::thread acThread{[this] { clientAcceptHandler(this); }};
+    std::thread{[this] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
-    this->keepAlive->init(participants,needSyncData,threadPool);
+    this->keepAlive->init(participants, needSyncData, threadPool);
 
     LOG_F(INFO, "init over");
-    acThread.detach();
     return *this;
 }
 
@@ -293,16 +292,16 @@ CoServer::~CoServer() {
 
 int CoServer::getAliveCnt() {
     int wait_cnt = 0;
-    for (const auto& p: participants) {
+    for (const auto &p: participants) {
         if (p->isAlive) {
-            wait_cnt ++;
+            wait_cnt++;
         }
     }
     return wait_cnt;
 }
 
 // 获取一个 p 最新的 操作(日志)索引
-void CoServer::getLatestIndex(Participant* p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
+void CoServer::getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std::vector<int> &result) {
     LOG_F(INFO, "Trying to get Lastest index");
 
     // 协议
@@ -341,7 +340,7 @@ void CoServer::syncKVDB() {
     waitSyncGroup.Add(this->getAliveCnt());
     std::vector<int> result(participants.size());
     int idx = -1;
-    for (Participant * p: participants) {
+    for (Participant *p: participants) {
         idx++;
         if (!p->isAlive) continue;
         // 注意用法
@@ -357,7 +356,8 @@ void CoServer::syncKVDB() {
     int maxLogIndex = 0, maxIndex = -1;
     for (int i = 0; i < participants.size(); i++) {
         if (!participants[i]->isAlive) continue;
-        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, participants[i]->lastIndex);
+        LOG_F(INFO, "alive p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port,
+              participants[i]->lastIndex);
         if (maxLogIndex < participants[i]->lastIndex) {
             maxLogIndex = participants[i]->lastIndex;
             maxIndex = i;
@@ -365,21 +365,22 @@ void CoServer::syncKVDB() {
     }
     // 获取leader
     if (maxIndex != -1) {
-        Participant* mainPart = participants[maxIndex];
+        Participant *mainPart = participants[maxIndex];
         LOG_F(INFO, "maxLogIndex: %d, max part: (%s:%d)", maxLogIndex, mainPart->ip.c_str(), mainPart->port);
         // 开始查找需要进行同步的参与者
-        std::vector<Participant*> toSyncParts;
+        std::vector<Participant *> toSyncParts;
         for (int i = 0; i < participants.size(); i++) {
             if (!participants[i]->isAlive) continue;
             if (maxLogIndex > participants[i]->lastIndex) {
                 toSyncParts.emplace_back(participants[i]);
-                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port, participants[i]->lastIndex);
+                LOG_F(INFO, "should sync: p(%s:%d) latestIndex: %d", participants[i]->ip.c_str(), participants[i]->port,
+                      participants[i]->lastIndex);
             }
         }
         if (toSyncParts.empty()) {
             LOG_F(INFO, "nothing to sync ...");
         } else {
-            LOG_F(INFO,"%s", (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
+            LOG_F(INFO, "%s", (std::to_string(toSyncParts.size()) + std::string(" ps waiting to sync")).c_str());
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
             for (auto s: leaderData) {
@@ -387,7 +388,7 @@ void CoServer::syncKVDB() {
             }
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
-            for (auto& p: toSyncParts) {
+            for (auto &p: toSyncParts) {
                 std::thread handleOneSync([this, p, leaderData, maxLogIndex] {
                     LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
                     this->syncOnePart(p, leaderData, maxLogIndex);
@@ -464,7 +465,6 @@ const Participants &CoServer::getParticipants() const {
 }
 
 
-
 uranus::ThreadPool *CoServer::getThreadPool() const {
     return threadPool;
 }
@@ -489,13 +489,14 @@ void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leade
     LOG_F(INFO, "(%s:%d) doing syncOnePart ...", p->ip.c_str(), p->port);
 
     // 加入了索引信息
-    std::string msg = Util::Encoder("SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
+    std::string msg = Util::Encoder(
+            "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
 //    std::cout << "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"" << std::endl;
 //    LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
     newLeaderData.insert(newLeaderData.begin(), msg);
     char buf[BUFSIZ];  //数据传送的缓冲区
 
-    for (const auto& msg: newLeaderData) {
+    for (const auto &msg: newLeaderData) {
         LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
         if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
             LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
