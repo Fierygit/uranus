@@ -228,7 +228,8 @@ void PaServer::handleCoor(int clientSocket) {
                         }
                     }
                 }
-
+                this->latestIndex = latestIndex;
+                LOG_F(INFO, "set this->latestIndex = %d", this->latestIndex);
             }
         }
         // 其他的 正常的命令

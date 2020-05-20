@@ -388,9 +388,9 @@ void CoServer::syncKVDB() {
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
             for (auto& p: toSyncParts) {
-                std::thread handleOneSync([this, p, &leaderData, maxIndex] {
+                std::thread handleOneSync([this, p, leaderData, maxLogIndex] {
                     LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
-                    this->syncOnePart(p, leaderData, maxIndex);
+                    this->syncOnePart(p, leaderData, maxLogIndex);
                 });
                 handleOneSync.detach();
             }
@@ -470,14 +470,17 @@ uranus::ThreadPool *CoServer::getThreadPool() const {
 void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex) {
     std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
     std::vector<std::string> newLeaderData = leaderData;
-    // TODO: 加入索引信息
+    LOG_F(INFO, "(%s:%d) doing syncOnePart ...", p->ip.c_str(), p->port);
 
+    // 加入了索引信息
     std::string msg = Util::Encoder("SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
-    LOG_F(INFO, "syncOnePart: to send: %s", Util::outputProtocol(msg).c_str());
-    newLeaderData.insert(leaderData.begin(), msg);
+//    std::cout << "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"" << std::endl;
+//    LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
+    newLeaderData.insert(newLeaderData.begin(), msg);
     char buf[BUFSIZ];  //数据传送的缓冲区
 
     for (const auto& msg: newLeaderData) {
+        LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
         if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
             LOG_F(ERROR, "send error: GET \"${KVDB_next}\"");
         } else {
