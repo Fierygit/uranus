@@ -2,5 +2,5 @@
 
 all:
 #	cd build
-	echo "$(pwd)"
+	echo "：$(pwd)"
 	echo "hello"
