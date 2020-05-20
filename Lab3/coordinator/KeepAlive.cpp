@@ -18,6 +18,7 @@ void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
+
             std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
             keepaliveCheck(participants, needSyncData, poll);
         }
@@ -37,12 +38,15 @@ void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData
 void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *pool) {
     WaitGroup waitGroup;
     waitGroup.Add("keepAlive", participants.size());
+    //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
         pool->addTask([p, &needSyncData, &pool, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII
+                //std::cout << "what the fuck\n";
                 std::unique_lock<std::mutex> tmpLock(p->lock); //warning
+                //std::cout << "what the fuck\n";
                 if (!p->isAlive) {// 挂了的尝试去连接一下
                     if (connectLostPa(p)) needSyncData = true;
                     goto end;  // 结束喽！！！！！！！！！！！！！！！！！！！！！！
@@ -73,6 +77,7 @@ void KeepAlive::sendAndRecv(Participant *p) {
         LOG_F(INFO, "ip: %s\tport: %d\t send keepalive success!!!", p->ip.c_str(), p->port);
     }
 
+    // 三秒钟给我回消息
     int rc = Util::recvByTime(p->fd, 3);
     if (rc < 0) {
         LOG_F(ERROR, "select error!!!! I dont know what happen");

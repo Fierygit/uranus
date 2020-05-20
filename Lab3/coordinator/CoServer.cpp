@@ -173,25 +173,36 @@ void CoServer::send2PaSync(std::string msg) {
             {// 锁的作用域, RAII
                 p->pc1Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
+                //发数据
                 if (send(p->fd, msg.c_str(), msg.size(), 0) != msg.size()) {
                     p->pc1Reply.stateCode = 2; //发送失败
                     LOG_F(WARNING, "participant %d send error!!!", p->port);
                     goto end;
                 } else {            //发送完等待接受
                     LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
-                    char buf[BUFSIZ];  //数据传送的缓冲区
-                    int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
-                    buf[len] = '\0';
-                    if (len <= 0) { // 如果co 挂了
-                        LOG_F(WARNING, "participant %d connection closed!!!", p->port);
-                        p->pc1Reply.stateCode = 1; //接受挂了
-                        goto end;
+                    int rc = Util::recvByTime(p->fd, 3); //设置定时器
+                    if (rc < 0) {
+                        LOG_F(ERROR, "select error!!!! I dont know what happen");
+                        return;
+                    } else if (rc == 0) { // 超时不鸟人
+                        LOG_F(INFO, "ip: %s\tport: %d\t dont reply??????????????", p->ip.c_str(), p->port);
+                        p->pc1Reply.stateCode = 1; // abort 但是不挂pa
+                    }else {
+                        char buf[BUFSIZ];  //数据传送的缓冲区
+                        int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
+                        buf[len] = '\0';
+                        if (len <= 0) { // 如果co 挂了
+                            LOG_F(WARNING, "participant %d connection closed!!!", p->port);
+                            p->pc1Reply.stateCode = 1; //接受挂了
+                            p->isAlive = false;
+                            goto end;
+                        }
+                        //std::cout << buf << std::endl;
+                        LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
+                        Command command = Util::Decoder(buf);
+                        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
+                              command.op, command.key.c_str(), command.value.c_str());
                     }
-                    //std::cout << buf << std::endl;
-                    LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
-                    Command command = Util::Decoder(buf);
-                    LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                          command.op, command.key.c_str(), command.value.c_str());
                 }
                 end:;// 释放锁
                 waitGroup.Done(); // 结束喽！！！！！！
@@ -244,11 +255,12 @@ CoServer &CoServer::init() {
     // 同步连接所有的 participant,
     initPaSrver();
 
-    this->keepAlive->init(participants,needSyncData,threadPool);
 
     // 创建子线程接受新的 client 连接
     std::thread acThread{[this] { clientAcceptHandler(this); }};
     acThread.detach();
+
+    this->keepAlive->init(participants,needSyncData,threadPool);
 
     LOG_F(INFO, "init over");
     return *this;
