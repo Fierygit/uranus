@@ -8,7 +8,7 @@ PASSWORD="$2"
 
 # ######################################################################
 
-COORDINATOR_IP=127.0.0.1
+COORDINATOR_IP=192.168.66.101
 COORDINATOR_PORT=8001
 NC_TIMEOUT=3
 ERROR_RETRY_TIMES=10
@@ -62,30 +62,30 @@ participants_config_path=(${LAB3_ABSOLUTE_PATH}"/coordinator1.conf" \
 function generate_config_files
 {
 	echo -e "mode coordinator\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8002\n"\
-"participant_info 127.0.0.1:8003\n"\
-"participant_info 127.0.0.1:8004\n" > ${coordinator_config_path}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.201:8002\n"\
+"participant_info 192.168.66.202:8003\n"\
+"participant_info 192.168.66.203:8004\n" > ${coordinator_config_path}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8002\n" > ${participants_config_path[0]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.201:8002\n" > ${participants_config_path[0]}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8003\n" > ${participants_config_path[1]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.202:8003\n" > ${participants_config_path[1]}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8004\n" > ${participants_config_path[2]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.203:8004\n" > ${participants_config_path[2]}
 }
 
 function add_virtual_nics
 {
-	echo ${PASSWORD} | sudo -S ifconfig lo:0 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:1 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:2 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:3 127.0.0.1/24
+	echo ${PASSWORD} | sudo -S ifconfig lo:0 192.168.66.101/24
+	echo ${PASSWORD} | sudo -S ifconfig lo:1 192.168.66.201/24
+	echo ${PASSWORD} | sudo -S ifconfig lo:2 192.168.66.202/24
+	echo ${PASSWORD} | sudo -S ifconfig lo:3 192.168.66.203/24
 }
 
 function remove_virtual_nics
