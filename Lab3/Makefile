@@ -1,4 +1,6 @@
-echo:
-	cd build
-	echo ""$pwd"
-	echo "hleoo"
+
+
+all:
+#	cd build
+	echo "$(pwd)"
+	echo "hello"
