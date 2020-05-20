@@ -247,7 +247,7 @@ CoServer &CoServer::init() {
     // 同步连接 所有的 participant,
     initPaSrver();
 
-    this->keepAlive->init(this->participants);
+    this->keepAlive->init(participants,needSyncData,threadPool);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -374,6 +374,7 @@ void CoServer::syncKVDB() {
     }
 }
 
+
 std::vector<std::string> CoServer::getLeaderData(Participant* p) {
     std::vector<std::string> leaderData;
     // 协议, 获取整个KVDB
@@ -427,4 +428,14 @@ std::vector<std::string> CoServer::getLeaderData(Participant* p) {
         }
     }
     return leaderData;
+}
+
+const Participants &CoServer::getParticipants() const {
+    return participants;
+}
+
+
+
+uranus::ThreadPool *CoServer::getThreadPool() const {
+    return threadPool;
 }

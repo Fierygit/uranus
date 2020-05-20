@@ -16,6 +16,18 @@ public:
     /*
      * 字符串到 Command，解析不到返回空的
      */
+    // -1 error
+    // 0  没有事件
+    // > 0  fd
+    static int recvByTime(int &fd, int time) {
+        fd_set fds;
+        timeval tv{};
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        tv.tv_sec = time; //给 time 秒钟回复
+        return select(fd + 1, &fds, nullptr, nullptr, &tv);
+    }
+
 
     static Command strToCommand(std::string &buf) {
         return Command{};

@@ -8,6 +8,7 @@
 #include <chrono>
 #include <vector>
 #include "../common/public.h"
+#include "../common/ThreadPool.h"
 
 
 class KeepAlive {
@@ -15,21 +16,25 @@ class KeepAlive {
 public:
     //using Participants = std::vector<Participant>;
     using Munites = std::chrono::minutes;
-
+    KeepAlive(){}
     KeepAlive(int checkInterval, int invalidInterval)
             : checkInterval{checkInterval}, invalidInterval{invalidInterval} {
     }
 
     ~KeepAlive() { Finished = true; }
 
-    void init(Participants& participants);
+    void init(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll);
 
 private:
-    void keepaliveCheck(Participants& participants);
+    void keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll);
+
+    static bool connectLostPa(Participant *p);
+
+    void sendAndRecv(Participant *p);
 
 private:
-    Munites checkInterval;   // 心跳检测间隔
-    Munites invalidInterval; // 判定失效间隔
+    Munites checkInterval{};
+    Munites invalidInterval{}; // 判定失效间隔
     volatile bool Finished{false};
 };
 
