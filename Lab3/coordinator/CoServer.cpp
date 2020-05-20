@@ -352,7 +352,7 @@ void CoServer::syncKVDB() {
     // 获取leader
     if (maxIndex != -1) {
         Participant* mainPart = participants[maxIndex];
-        LOG_F(INFO, "maxIndex: %d, max part: (%s:%d)", maxIndex, mainPart->ip.c_str(), mainPart->port);
+        LOG_F(INFO, "maxLogIndex: %d, max part: (%s:%d)", maxLogIndex, mainPart->ip.c_str(), mainPart->port);
         // 开始查找需要进行同步的参与者
         std::vector<Participant*> toSyncParts;
         for (int i = 0; i < participants.size(); i++) {
@@ -459,7 +459,8 @@ void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leade
     std::vector<std::string> newLeaderData = leaderData;
     // TODO: 加入索引信息
 
-    std::string msg = Util::Encoder("SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(leaderData.size()) + "\"");
+    std::string msg = Util::Encoder("SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
+    LOG_F(INFO, "syncOnePart: to send: %s", Util::outputProtocol(msg).c_str());
     newLeaderData.insert(leaderData.begin(), msg);
     char buf[BUFSIZ];  //数据传送的缓冲区
 
