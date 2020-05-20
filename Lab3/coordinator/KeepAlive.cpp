@@ -68,7 +68,9 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
 }
 
 void KeepAlive::sendAndRecv(Participant *p) {
-    std::string keepAliveMsg{"hi"};
+    // 心跳包的格式
+    std::string keepAliveMsg{"GET ${alive}"};
+    keepAliveMsg = Util::Encoder(keepAliveMsg);
     int len = send(p->fd, keepAliveMsg.c_str(), keepAliveMsg.size(), 0);
     if (len != keepAliveMsg.size()) {                    // 错误处理！！！
         LOG_F(ERROR, "ip: %s\tport: %d\tkeep alive send error", p->ip.c_str(), p->port);

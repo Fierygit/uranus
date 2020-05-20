@@ -108,8 +108,15 @@ void PaServer::handleCoor(int clientSocket) {
         bool command_run = true;
         std::string send_msg;
 
+        // 心跳包的处理
+        if (command.op == GET && command.key == "${alive}") {
+            LOG_F(INFO, "GET ${alive}");
+            send_msg = "SET ${alive} \"${alive}\"";
+            LOG_F(INFO, "latestIndex: %d", this->latestIndex);
+            command_run = false;
+        }
         // 添加返回索引功能
-        if (command.op == GET && command.key == "${LatestIndex}") {
+        else if (command.op == GET && command.key == "${LatestIndex}") {
             LOG_F(INFO, "CoServer: GET \"${LatestIndex}\"");
             send_msg = "SET ${LatestIndex} \"" + std::to_string(this->latestIndex) + "\"";
             command_run = false;
