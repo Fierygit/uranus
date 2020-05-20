@@ -366,11 +366,16 @@ void CoServer::syncKVDB() {
             // 首先获得 leader(假设) 的数据库信息
             std::vector<std::string> leaderData = getLeaderData(mainPart);
             for (auto s: leaderData) {
-                LOG_F(INFO, "leaderData: %s", s.c_str());
-
+                LOG_F(INFO, "leaderData: %s", Util::outputProtocol(s).c_str());
             }
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
+            for (auto p: toSyncParts) {
+                std::thread handleOneSync([this, &p, &leaderData] {
+                    this->syncOnePart(p, leaderData);
+                });
+                handleOneSync.detach();
+            }
         }
     } else {
         LOG_F(INFO, "nothing to sync ...");
@@ -441,4 +446,8 @@ const Participants &CoServer::getParticipants() const {
 
 uranus::ThreadPool *CoServer::getThreadPool() const {
     return threadPool;
+}
+
+void CoServer::syncOnePart(Participant *p, const std::vector<std::string>& leaderData) {
+    // TODO: 单个的同步
 }
