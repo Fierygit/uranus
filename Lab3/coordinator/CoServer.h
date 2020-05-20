@@ -68,9 +68,10 @@ public:
 
     int getServerSockfd() const;
 
-    void getLatestIndex(Participant *p, WaitGroup *waitGroup, int idx, std::vector<int> &result);
-
-    void test1(Participant *p);
+private:
+    void getLatestIndex(Participant *p, WaitGroup* waitGroup, int idx, std::vector<int> &result);
+    void syncKVDB();
+    std::vector<std::string> getLeaderData(Participant* p);
 
     const Participants &getParticipants() const; // 里面存的东西可以变吗？？？？
 

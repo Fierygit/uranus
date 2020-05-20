@@ -43,6 +43,7 @@ struct Participant {
     int fd;
     bool isAlive;
     bool isBack;
+    int lastIndex;
     Time lastAlive{};
     RequestReply pc1Reply{0, ""};
     RequestReply pc2Reply{0, ""};

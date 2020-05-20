@@ -4,7 +4,7 @@
 
 #include <thread>
 #include <arpa/inet.h>
-#include <zconf.h>
+#include <unistd.h>
 #include "KeepAlive.h"
 #include "../common/Util.h"
 #include "../common/loguru.hpp"
