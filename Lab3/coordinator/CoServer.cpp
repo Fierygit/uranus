@@ -39,6 +39,9 @@ CoServer::~CoServer() {
 
 CoServer &CoServer::init() {
 
+    loguru::shutdown();
+
+
     // 同步初始化自己的服务
     initCoSrver();
 

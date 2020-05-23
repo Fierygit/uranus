@@ -926,7 +926,7 @@ void remove_all_callbacks() {
 
 // Returns the maximum of g_stderr_verbosity and all file/custom outputs.
 Verbosity current_verbosity_cutoff() {
-  return g_stderr_verbosity > s_max_out_verbosity ? g_stderr_verbosity
+      return g_stderr_verbosity > s_max_out_verbosity ? g_stderr_verbosity
                                                   : s_max_out_verbosity;
 }
 
@@ -1247,7 +1247,7 @@ static void print_preamble(char *out_buff, size_t out_buff_size,
 // stack_trace_skip is just if verbosity == FATAL.
 static void log_message(int stack_trace_skip, Message &message,
                         bool with_indentation, bool abort_if_fatal) {
-  const auto verbosity = message.verbosity;
+    const auto verbosity = message.verbosity;
   std::lock_guard<std::recursive_mutex> lock(s_mutex);
 
   if (message.verbosity == Verbosity_FATAL) {
