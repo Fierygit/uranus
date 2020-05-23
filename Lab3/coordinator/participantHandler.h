@@ -11,4 +11,6 @@
 void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool *threadPool);
 
 
+std::string handler2pc(std::string& commandStr, Participants& participants, uranus::ThreadPool* threadPool);
+
 #endif //LAB3_PARTICIPANTHANDLER_H

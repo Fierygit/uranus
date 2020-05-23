@@ -115,13 +115,13 @@ void PaServer::handleCoor(int clientSocket) {
             LOG_F(INFO, "latestIndex: %d", this->latestIndex);
             command_run = false;
         }
-        // 添加返回索引功能
+            // 添加返回索引功能
         else if (command.op == GET && command.key == "${LatestIndex}") {
             LOG_F(INFO, "CoServer: GET \"${LatestIndex}\"");
             send_msg = "SET ${LatestIndex} \"" + std::to_string(this->latestIndex) + "\"";
             command_run = false;
         }
-        // 作为 leader, 将数据发送给协调者
+            // 作为 leader, 将数据发送给协调者
         else if (command.op == GET && command.key == "${KVDB}") {
             LOG_F(INFO, "CoServer: request to sync data as leader");
             // 被同步数据
@@ -136,7 +136,7 @@ void PaServer::handleCoor(int clientSocket) {
             } else {
 //                 在循环内发送数据
 //                 接一个反馈发一个数据
-                for (const auto& item: KVDB) {
+                for (const auto &item: KVDB) {
                     LOG_F(INFO, "waiting for GET ${KVDB_next} ...");
                     int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息
                     buf[len] = '\0';
@@ -166,7 +166,7 @@ void PaServer::handleCoor(int clientSocket) {
                 }
             }
         }
-        // 作为被同步的对象, 指明了循环的次数
+            // 作为被同步的对象, 指明了循环的次数
         else if (command.op == SET && command.key == "${KVDB_sync_one}") {
             // 收到需要同步的消息, 先重置索引
             // TODO: 这里有个小问题: 如果重置了, 然后其他的都是新的, 就不用同步, 但是数据不一致
@@ -239,7 +239,7 @@ void PaServer::handleCoor(int clientSocket) {
                 LOG_F(INFO, "set this->latestIndex = %d", this->latestIndex);
             }
         }
-        // 其他的 正常的命令
+            // 其他的 正常的命令
         else {
             // 1phase之前, 可以处理
             if (status == PRE_PHASE1) {
@@ -258,18 +258,22 @@ void PaServer::handleCoor(int clientSocket) {
                     // 要求提交
                     if (command_1phase.op == SET) {  // SET == 1
                         KVDB[command_1phase.key] = command_1phase.value;
-                        send_msg = "SET STATUS \"1\"";
+                        send_msg = "SET ${REP_SET} \"${OK}\"";
                     } else if (command_1phase.op == GET) {  // GET == 0
                         if (KVDB.count(command_1phase.key) == 0) {
                             // 没有这个值
-                            send_msg = "SET STATUS \"0\"";
+                            send_msg = "SET ${REP_GET} \"${NULL}\"";
                         } else {
                             val = KVDB[command_1phase.key];
-                            send_msg = "SET ${val} " + std::string("\"" + val + "\"");
+                            send_msg = "SET ${REP_GET} " + std::string("\"" + val + "\"");
                         }
                     } else if (command_1phase.op == DEL) {  // DEL == 2
-                        KVDB.erase(command_1phase.key);
-                        send_msg = "SET STATUS \"1\"";
+                        if (KVDB.count(command_1phase.key) == 0) {
+                            send_msg = "SET ${REP_DEL} \"${NULL}\"";
+                        } else {
+                            KVDB.erase(command_1phase.key);
+                            send_msg = "SET ${REP_DEL} \"${OK}\"";
+                        }
                     } else {  // 命令不合法
                         send_msg = "SET STATUS \"0\"";
                     }

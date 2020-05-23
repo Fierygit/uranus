@@ -9,6 +9,8 @@
 #include <vector>
 #include <mutex>
 
+#define ERROR_REP "-ERROR\\r\\n"
+
 enum OP {
     GET, SET, DEL
 };
@@ -45,8 +47,7 @@ struct Participant {
     bool isBack;
     int lastIndex;
     Time lastAlive{};
-    RequestReply pc1Reply{0, ""};
-    RequestReply pc2Reply{0, ""};
+    RequestReply Reply{0, ""};
 };
 
 typedef std::vector<Participant *> Participants;
