@@ -12,8 +12,8 @@ std::string test(std::string str){
 int main() {
 //    std::cout << "hi" << std::endl;
     std::string str;
-    std::cout<<"SET Key1 Value\n";
-    std::cout<<test("SET Key1 Value");
+    std::cout<<"SET Key1 Value dasf\n";
+    std::cout<<test("SET Key1 \"Value daf\"");
     std::cout<<"GET Key1\n";
     std::cout<<test("GET Key1");
     std::cout<<"DEL Key1 Key2\n";

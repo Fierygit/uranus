@@ -234,7 +234,7 @@ void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int
         } else {
             int len = recv(p->fd, buf, BUFSIZ, 0);//接收服务器端信息
             buf[len] = '\0';
-            if (len <= 0) { // 如果co 挂了
+            if (len <= 0) { // 如果co 挂了 todo 这里要不要关掉服务呢？
                 LOG_F(WARNING, "participant %d connection closed!!!", p->port);
             }
             LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());

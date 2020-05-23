@@ -505,6 +505,7 @@ function kill_one_of_participants
 	echo kill -9 ${participants_pid[0]}
 }
 
+
 function kill_all_participants
 {
 	for (( i=0; i<3; i++ ))
@@ -854,6 +855,125 @@ function test_item9
 }
 
 
+
+################################# devil version
+
+# i just write c and exe, pass arg 
+function run_one_participant_c_and_other_language_robustly
+{
+    p_num=$1 # 第几个participant
+
+	chmod 777 ${LAB3_ABSOLUTE_PATH}/*
+
+    for (( j=0; j<$START_RETYR_TIMES; j++ ))
+    do
+        # if this can run with double $???   ${ ${}  } 
+        ${LAB3_ABSOLUTE_PATH}/kvstore2pcsystem --config_path ${participants_config_path[$p_num]} &
+        check_background_process_start_status $!
+        retval=$?
+
+        if [[ $retval -eq 0 ]]
+        then
+            echo "Run participant[$p_num] successfully"
+            participants_pid[$p_num]=$!
+            break
+        else
+            echo "Run participant[$p_num]. Retry times: [$j]"
+            continue
+        fi
+    done
+
+    if [[ $retval -ne 0 ]]
+    then
+        echo "Run participant[$p_num] failed"
+        return $FAIL
+    fi
+	echo "Run participant $p_num successfully"
+	return $SUCCESS
+}
+
+# just start the coordinator
+function run_coordinator_c_and_other_language_robustly
+{
+	chmod 777 ${LAB3_ABSOLUTE_PATH}/*
+	
+	for (( i=0; i<$START_RETYR_TIMES; i++ ))
+	do
+		${LAB3_ABSOLUTE_PATH}/kvstore2pcsystem --config_path ${coordinator_config_path} &
+		check_background_process_start_status $!
+		retval=$?
+
+		if [[ $retval -eq 0 ]]
+		then
+			echo "Run coordinator successfully"
+			coordinator_pid=$!
+			break
+		else
+			sleep 1
+			continue
+		fi
+	done
+
+    if [[ $retval -ne 0 ]]
+    then
+        echo "Run coordinator failed"
+        return $FAIL
+    fi
+	echo "Run coordinator successfully"
+	return $SUCCESS
+}
+
+function kill_participant_by_pid
+{
+    tmp_pid=$1
+    kill -9 ${tmp_pid}
+}
+
+printf -v standard_item10 "*1\r\n\$17\r\nitem10_key_value\r\n"
+function test_item10
+{
+	set_tag
+	echo "---------------------------------- Test item 10 ----------------------------------"
+	echo "Test item 10. Test point: test sync data."
+    #  participant:        p1      p2       p3   |    (- is dead,  + is live)
+    #   1:                 +        -       -    |    start p1
+    #   2:                 +        -       -    |    set a key and value
+    #   3:                 +        +       +    |    start p2 p3, when this time, data should be synced
+    #   4:                 -        +       +    |    kill p1
+    #   5:                 -        +       +    |    get the value at roll 2 set    
+
+    p1=0
+    p2=1
+    p3=2
+
+    kill_coordinator_and_all_participants # insure my test
+
+    run_coordinator_c_and_other_language_robustly
+    run_one_participant_c_and_other_language_robustly $p1
+
+	send_set_command 10 item10_key 16 item10_key_value
+
+    run_one_participant_c_and_other_language_robustly $p2
+    run_one_participant_c_and_other_language_robustly $p3
+	kill_one_of_participants ${participants_pid[0]}
+    
+	send_get_command 10 item10_key
+
+	if [[ $get_result = $standard_item10 ]]
+	then
+		echo "============================ [PASSED] : Test item 10 ============================"
+		return $PASSED
+	else
+		echo "============================ [FAILED] : Test item 10 ============================"
+		return $FAILED
+	fi
+
+}
+
+
+
+
+
 # ######################################################################
 
 function cloud_roll_up
@@ -883,6 +1003,8 @@ function cloud_roll_up
 	TEST_RESULT_ARR[8]=$?
 	test_item9
 	TEST_RESULT_ARR[9]=$?
+    test_item10
+    TEST_RESULT_ARR[10]=$?
 
 	echo "---------------------------------- Global test done ----------------------------------"
 }

@@ -19,6 +19,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma ide diagnostic ignored "cppcoreguidelines-pro-type-member-init"
+
 CoServer::CoServer(std::string ip, int port) :
         port(port),
         ip(std::move(ip)),
@@ -26,9 +27,8 @@ CoServer::CoServer(std::string ip, int port) :
         threadPool(new uranus::ThreadPool(3)),
         needSyncData(false),
         keepAlive(new KeepAlive(6, 12)) {}
+
 #pragma clang diagnostic pop
-
-
 
 
 CoServer::~CoServer() {
@@ -38,6 +38,9 @@ CoServer::~CoServer() {
 }
 
 CoServer &CoServer::init() {
+
+    loguru::shutdown();
+
 
     // 同步初始化自己的服务
     initCoSrver();
@@ -52,7 +55,7 @@ CoServer &CoServer::init() {
     std::thread{[this] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
-    this->keepAlive->init(participants, needSyncData, threadPool);
+    //this->keepAlive->init(participants, needSyncData, threadPool);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -75,70 +78,21 @@ void CoServer::run() {
         LOG_F(INFO, "get command from queue OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(),
               command.value.c_str());
 
+        std::string rep2client;
+
         int tmpIsAlive = 0;// 一个都没活着， 直接返回错误的
         for (Participant *&p : participants) if (p->isAlive)tmpIsAlive++;
         if (tmpIsAlive == 0) {
-            std::string rep{"ERROR!"};
-            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
-                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-                continue;// 最好代码可以复用， 先放着
-            }
+            rep2client = ERROR_REP;
+            goto send2client;
         }
 
-        // 这是设计错误， 万一一直没有数据， 就卡住了
-        //################      stop the world      ############################################
-        if (this->needSyncData) {
-            LOG_F(INFO, "start sync the data");
-            //
-        }
+        rep2client = handler2pc(commandStr, participants, threadPool);
 
-        int pc1 = 0;
-        // 1、 第一阶段，提交请求命令给 participants **************************************************
-        // todo  万一 abort 的时候， 有机子断了导致数据不同步？？？
-
-        send2PaSync(commandStr, participants, threadPool);// 同步发送------------------------------------------------
-        LOG_F(INFO, "1 phase send over !");
-        for (Participant *p : participants) {
-            if (!p->isAlive) continue;
-            if (p->pc1Reply.stateCode != SUCCESS) {
-                pc1 = 1;
-                break;
-            }
-        }
-
-        int pc2 = 0;
-        //2、 第二阶段*****************************************************************************
-        if (pc1 == 0) {
-
-            LOG_F(INFO, "1 phase success ! start to 2 phase");
-            std::string msg = Util::Encoder("SET ${key} \"${commit}\"");
-            LOG_F(INFO, "2 phase msg: %s", Util::outputProtocol(msg).c_str());
-
-            send2PaSync(msg, participants, threadPool);// 同步发送------------------------------------------------------
-            for (Participant *p : participants) {
-                if (p->pc1Reply.stateCode != SUCCESS) {
-                    pc2 = 1;
-                }
-            }
-        } else {
-            std::string msg = Util::Encoder("SET ${key} \"${abort}\"");
-            send2PaSync(msg, participants, threadPool);
-            pc2 = 1;
-        }
-
-        // back ot client ----------------------------------------------------------
-        if (pc2 == 0) {
-            std::string rep{"SUCCESS!"};
-            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
-                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-                return;
-            }
-        } else {
-            std::string rep{"ERROR!"};
-            if (send(client.fd, rep.c_str(), rep.length(), 0) < 0) {
-                LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-                return;
-            }
+        send2client:;
+        if (send(client.fd, rep2client.c_str(), rep2client.length(), 0) < 0) {
+            LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+            continue;
         }
     }
 }
@@ -147,8 +101,10 @@ void CoServer::run() {
 /**
  * 首先先连接 所有的 pa, 当cor 故障重连的时候， 这里去恢复连接
  *
- * todo 断了恢复，要不要检查同步？？？
- */
+ * */
+
+// todo 断了恢复，要不要检查同步？？？
+
 
 void CoServer::initPaSrver() {
     LOG_F(INFO, "start to init PaServer ...");
