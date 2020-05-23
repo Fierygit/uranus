@@ -8,7 +8,7 @@ PASSWORD="$2"
 
 # ######################################################################
 
-COORDINATOR_IP=127.0.0.1
+COORDINATOR_IP=192.168.66.101
 COORDINATOR_PORT=8001
 NC_TIMEOUT=3
 ERROR_RETRY_TIMES=10
@@ -62,59 +62,59 @@ participants_config_path=(${LAB3_ABSOLUTE_PATH}"/coordinator1.conf" \
 function generate_config_files
 {
 	echo -e "mode coordinator\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8002\n"\
-"participant_info 127.0.0.1:8003\n"\
-"participant_info 127.0.0.1:8004\n" > ${coordinator_config_path}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.201:8002\n"\
+"participant_info 192.168.66.202:8003\n"\
+"participant_info 192.168.66.203:8004\n" > ${coordinator_config_path}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8002\n" > ${participants_config_path[0]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.201:8002\n" > ${participants_config_path[0]}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8003\n" > ${participants_config_path[1]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.202:8003\n" > ${participants_config_path[1]}
 
 	echo -e "mode participant\n"\
-"coordinator_info 127.0.0.1:8001\n"\
-"participant_info 127.0.0.1:8004\n" > ${participants_config_path[2]}
+"coordinator_info 192.168.66.101:8001\n"\
+"participant_info 192.168.66.203:8004\n" > ${participants_config_path[2]}
 }
 
 function add_virtual_nics
 {
-	echo ${PASSWORD} | sudo -S ifconfig lo:0 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:1 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:2 127.0.0.1/24
-	echo ${PASSWORD} | sudo -S ifconfig lo:3 127.0.0.1/24
+	 ifconfig lo 192.168.66.101/24
+	 ifconfig lo 192.168.66.201/24
+	 ifconfig lo 192.168.66.202/24
+	 ifconfig lo 192.168.66.203/24
 }
 
 function remove_virtual_nics
 {
-	echo ${PASSWORD} | sudo -S ifconfig lo:0 down
-	echo ${PASSWORD} | sudo -S ifconfig lo:1 down
-	echo ${PASSWORD} | sudo -S ifconfig lo:2 down
-	echo ${PASSWORD} | sudo -S ifconfig lo:3 down
+	 ifconfig lo down
+	 ifconfig lo down
+	 ifconfig lo down
+	 ifconfig lo down
 }
 
 function set_virtual_nics_delay
 {
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:0 root netem delay ${DELAY}ms
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:1 root netem delay ${DELAY}ms
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:2 root netem delay ${DELAY}ms
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:3 root netem delay ${DELAY}ms
+	 tc qdisc add dev lo root netem delay ${DELAY}ms
+	 tc qdisc add dev lo root netem delay ${DELAY}ms
+	 tc qdisc add dev lo root netem delay ${DELAY}ms
+	 tc qdisc add dev lo root netem delay ${DELAY}ms
 }
 
 function set_virtual_nics_packet_loss
 {
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:0 root netem loss ${PACKET_LOSS_RATE}%
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:1 root netem loss ${PACKET_LOSS_RATE}%
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:2 root netem loss ${PACKET_LOSS_RATE}%
-	echo ${PASSWORD} | sudo -S tc qdisc add dev lo:3 root netem loss ${PACKET_LOSS_RATE}%
+	 tc qdisc add dev lo root netem loss ${PACKET_LOSS_RATE}%
+	 tc qdisc add dev lo root netem loss ${PACKET_LOSS_RATE}%
+	 tc qdisc add dev lo root netem loss ${PACKET_LOSS_RATE}%
+	 tc qdisc add dev lo root netem loss ${PACKET_LOSS_RATE}%
 }
 
 # function check_netcat
 # {
-# 	echo ${PASSWORD} | sudo -S apt install netcat
+# 	 apt install netcat
 # }
 
 function init_network_env
@@ -225,6 +225,7 @@ function run_kvstore2pcsystem_c_and_other_language_robustly
 		then
 			echo "Run coordinator successfully"
 			coordinator_pid=$!
+			echo coordinator_pid=$!
 			break
 		else
 			sleep 1
@@ -250,7 +251,8 @@ function run_kvstore2pcsystem_c_and_other_language_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
+					echo participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -313,7 +315,7 @@ function run_kvstore2pcsystem_java_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -374,7 +376,7 @@ function run_kvstore2pcsystem_python_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -472,6 +474,7 @@ function kill_and_restart_coordinator_robustly
 	echo "Kill coordinator and then restart."
 
 	kill -9 ${coordinator_pid}
+	echo kill -9 ${coordinator_pid}
 	sleep 1
 	run_kvstore2pcsystem_robustly START_COORDINATOR_ONLY
 
@@ -487,16 +490,19 @@ function kill_and_restart_coordinator_robustly
 function kill_coordinator_and_all_participants
 {
 	kill -9 ${coordinator_pid}
+	echo kill -9 ${coordinator_pid}
 
 	for (( i=0; i<3; i++ ))
 	do
 		kill -9 ${participants_pid[i]}
+		echo kill -9 ${participants_pid[i]}
 	done
 }
 
 function kill_one_of_participants
 {
 	kill -9 ${participants_pid[0]}
+	echo kill -9 ${participants_pid[0]}
 }
 
 function kill_all_participants
@@ -504,6 +510,7 @@ function kill_all_participants
 	for (( i=0; i<3; i++ ))
 	do
 		kill -9 ${participants_pid[i]}
+		echo kill -9 ${participants_pid[i]}
 	done
 }
 
@@ -880,6 +887,12 @@ function cloud_roll_up
 	echo "---------------------------------- Global test done ----------------------------------"
 }
 
+function clean_up
+{
+	kill_coordinator_and_all_participants
+	remove_virtual_nics
+}
+
 function show_test_result
 {
 	echo "Language: [${TEST_RESULT_ARR[0]}]"
@@ -907,5 +920,6 @@ function prepare_test_env
 
 prepare_test_env
 cloud_roll_up
+clean_up
 show_test_result
 

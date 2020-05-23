@@ -197,6 +197,26 @@ public:
         return true;
     }
 
+    // *2\r\n$5\r\nCloud\r\n$9\r\nComputing\r\n
+    static std::string EncodeResult(std::string raw) {
+        std::vector<std::string> strs;
+        raw += ' ';
+        std::string tmp_s;
+        for (auto ch: raw) {
+            if (ch == ' ') {
+                strs.emplace_back(tmp_s);
+                tmp_s = "";
+            } else {
+                tmp_s += ch;
+            }
+        }
+        std::string res = "*" + std::to_string(strs.size()) + "\r\n";
+        for (auto str: strs) {
+            res += "$" + std::to_string(str.size()) + "\r\n" + str + "\r\n";
+        }
+        return res;
+    }
+
 private:
 //    static std::stringstream ss;
 };

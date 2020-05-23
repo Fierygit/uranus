@@ -1,4 +1,5 @@
 #!/bin/bash
+# NOTE: 这里测试都是用nc. 我们的程序要写好对client的交互才好测试, 否则肯定是failed
 
 
 LAB3_PATH="$1"
@@ -80,6 +81,8 @@ function generate_config_files
 "participant_info 192.168.66.203:8004\n" > ${participants_config_path[2]}
 }
 
+# TODO: 不懂. 这似乎是在搭建一个网络, lo是loopback的意思
+# https://askubuntu.com/questions/444124/how-to-add-a-loopback-interface
 function add_virtual_nics
 {
 	echo ${PASSWORD} | sudo -S ifconfig lo:0 192.168.66.101/24
@@ -126,7 +129,7 @@ function init_network_env
 }
 
 
-
+# 执行 make, 生成可执行文件
 function do_make
 {
 	echo "Start make, waiting for a while......"
@@ -211,6 +214,7 @@ function language_checking
 	fi
 }
 
+# NOTE: 运行C_C++程序
 function run_kvstore2pcsystem_c_and_other_language_robustly
 {
 	chmod 777 ${LAB3_ABSOLUTE_PATH}/*
@@ -397,6 +401,7 @@ function run_kvstore2pcsystem_python_robustly
 	return $SUCCESS
 }
 
+# NOTE: 根据语言运行程序(默认c&c++)
 function run_kvstore2pcsystem_robustly
 {
 	language_checking
@@ -467,6 +472,7 @@ function run_kvstore2pcsystem_robustly
 	fi
 }
 
+# NOTE: 杀死并重启协调者
 function kill_and_restart_coordinator_robustly
 {
 	echo "Kill coordinator and then restart."
@@ -484,6 +490,7 @@ function kill_and_restart_coordinator_robustly
 	fi
 }
 
+# NOTE: 杀死所有
 function kill_coordinator_and_all_participants
 {
 	kill -9 ${coordinator_pid}
@@ -507,6 +514,7 @@ function kill_all_participants
 	done
 }
 
+# NOTE: 啥意思?
 function restart_kvstore2pcsystem_if_down_abnormally
 {
 	if ! ps -p $coordinator_pid > /dev/null
@@ -527,6 +535,7 @@ function restart_kvstore2pcsystem_if_down_abnormally
 	done
 }
 
+# NOTE: 一个 set 命令, 可以传递参数
 set_result=""
 function send_set_command
 {
@@ -552,6 +561,7 @@ function send_set_command
 	printf -v set_result "$retval_set"
 }
 
+# NOTE: 一个get命令
 get_result=""
 function send_get_command
 {
@@ -575,6 +585,7 @@ function send_get_command
 	printf -v get_result "$retval_get"
 }
 
+# NOTE: 一个 删除命令
 del_1_result=""
 function send_del_command_1
 {
@@ -598,6 +609,7 @@ function send_del_command_1
 	printf -v del_1_result "$retval_del1"
 }
 
+# NOTE: 删除多个key
 del_2_result=""
 function send_del_command_2
 {
@@ -632,10 +644,12 @@ function set_tag
 	echo "                                       \|/                                   "
 }
 
+# NOTE: 返回的结果
 printf -v standard_error ".ERROR\r\n"
 printf -v standard_ok "+OK\r\n"
 printf -v standard_nil "*1\r\n$3\r\nnil\r\n"
 
+# NOTE: 1. 测试启动运行
 standard_item1=""
 function test_item1
 {
@@ -656,6 +670,7 @@ function test_item1
 	fi
 }
 
+# NOTE: 2. 重启, 测试 set 命令, 然后查看返回码是否是 $standard_ok
 standard_item2="$standard_ok"
 function test_item2
 {
@@ -676,7 +691,7 @@ function test_item2
 	fi
 }
 
-
+# NOTE: 3. 设置一个key, 然后重启协调者, 再get这个key
 printf -v standard_item3 "*1\r\n\$11\r\nitem3_value\r\n"
 function test_item3
 {
@@ -700,7 +715,7 @@ function test_item3
 	fi
 }
 
-
+# NOTE: 4. 测试 get, 但是get的key是没有的, 所以要返回 nil
 standard_item4="$standard_nil"
 function test_item4
 {
@@ -722,7 +737,7 @@ function test_item4
 
 }
 
-
+# NOTE: 5. 分别设置两个key-val, 然后重启协调者, 再删除 key1, key2, 返回删除的数量
 printf -v standard_item5 ":2\r\n"
 function test_item5
 {
@@ -746,7 +761,7 @@ function test_item5
 	fi
 }
 
-
+# NOTE: 6. 两次设置统一值, 然后重启协调者, 再get这个key, 查看结果
 printf -v standard_item6 "*1\r\n\$15\r\nitem6_value_new\r\n"
 function test_item6
 {
@@ -771,7 +786,7 @@ function test_item6
 	fi
 }
 
-
+# NOTE: 7. 先设置再删除, 查看结果
 standard_item7="$standard_nil"
 function test_item7
 {
@@ -793,9 +808,10 @@ function test_item7
 	fi
 }
 
-
+# NOTE: 以上都是基础版本
 # ######################## advanced version ########################
 
+# NOTE: 8. 设置同一个 key 两次, 然后停掉一个协调者, 再设置这个key第三次, 然后get这个key的值, 看是哪个值
 printf -v standard_item8 "*1\r\n\$17\r\nitem8_key_value_3\r\n"
 function test_item8
 {
@@ -821,7 +837,7 @@ function test_item8
 
 }
 
-
+# NOTE: 9. 先set一个key两次(不同值), 然后杀死所有参与者, 再get一次, 得到错误
 standard_item9="$standard_error"
 function test_item9
 {
