@@ -10,17 +10,22 @@
 #include "../common/Util.h"
 #include "../common/loguru.hpp"
 #include "../common/WaitGroup.h"
+#include "syncDataHandler.h"
 
 
 //使用引用， 并发的时候遍历会不会出问题？//
 // 不会， 因为大小不会变化， 里面使用分段锁
-void KeepAlive::init(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll) {
+void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
 
             std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
+            std::atomic<bool> needSyncData{false};
             keepaliveCheck(participants, needSyncData, poll);
+            if(needSyncData) syncKVDB(participants);
+            //todo 确保了同步时不会有新的上线， 会不会有冲突呢？ 有！！！
+            // 同步过程中， client 各个pa返回的值可能不一样！！！
         }
     }};
     tmp.detach();
