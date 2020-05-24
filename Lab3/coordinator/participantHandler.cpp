@@ -53,14 +53,15 @@ std::string handler2pc(std::string &commandStr, Participants &participants, uran
 
         std::cout << rep << std::endl;
 
-        if (command.op == SET) rep = "+OK\\r\\n";           // SET------------
+        if (command.op == SET) rep = "+OK\r\n";           // SET------------
         else if (command.op == DEL) {                       // DEL------------
-            if (rep == "${NULL}") rep = "-ERROR\\r\\n";
-            else rep = ":1\\r\\n";
+            if (rep == "0") rep = "-ERROR\r\n";
+            else rep = ":" + rep + "\r\n";
         } else {                                             // GET-------------(不改变就是原值)
             if (command.op == GET && rep == "${NULL}") rep = R"(*1\r\n$3\r\nnil\r\n)";
+            else rep = Util::EncodeResult(rep);
         }
-    } else rep = "-ERROR\\r\\n";
+    } else rep = "-ERROR\r\n";
 
     return rep;
 }

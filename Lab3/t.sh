@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# printf  "*3\r\n\$3\r\nSET\r\n\$7\r\nCS06142\r\n\$5\r\nCloud\r\n" | nc -w 3 127.0.0.1 8001
 
 LAB3_PATH="$1"
 PASSWORD="$2"

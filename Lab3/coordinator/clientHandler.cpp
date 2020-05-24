@@ -53,19 +53,21 @@ void clientAcceptHandler(CoServer *coServer) {
 void clientReadHandler(const SubClientContex &ctx) {
     int clientSocket = ctx.client.fd;
     sockaddr_in clientAddr = ctx.client.addr;
-    std::string clientBuf, welcomeInfo{"welcome to uranus server"};
-    //发送欢迎信息
-    int len = send(clientSocket, welcomeInfo.c_str(), welcomeInfo.size(), 0);
-    if (len < 0) {
-        LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
-        return;
-    }
+//    std::string clientBuf, welcomeInfo{"welcome to uranus server"};
+//    //发送欢迎信息
+//    int len = send(clientSocket, welcomeInfo.c_str(), welcomeInfo.size(), 0);
+//    if (len < 0) {
+//        LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
+//        return;
+//    }
+    std::string clientBuf;
+    int len;
     char buf[BUFSIZ];  //数据传送的缓冲区8192
     /*接收客户端的数据并将其发送给客户端--recv返回接收到的字节数，send返回发送的字节数*/
     while ((len = recv(clientSocket, buf, BUFSIZ, 0)) > 0) {
         buf[len] = '\0';
-
-//        LOG_F(INFO, "%s", Util::outputProtocol(buf).c_str());
+        std::cout << buf << std::endl;
+        LOG_F(INFO, "%s", Util::outputProtocol(buf).c_str());
         clientBuf.append(buf);
         if (Util::HandleBanBao(clientBuf)) {
             //Command command = Util::Decoder(clientBuf);
