@@ -36,6 +36,20 @@ PaServer &PaServer::init() {
         exit(1);
     }
 
+    int ret = 0;
+    int reuse = 1;
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&reuse , sizeof(int));
+
+    if (ret < 0) {
+        perror("setsockopt1");
+        exit(-1);
+    }
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt2");
+        exit(-1);
+    }
+
     //绑定地址
     if (bind(serverSockfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) <
         0) {
@@ -86,7 +100,7 @@ void PaServer::handleCoor(int clientSocket) {
     // 0 : 普通情况, 可以执行
     // 1 : 进入了1phase, 等待1phase
     int status = 0;
-    Command command_1phase;  // 接收的命令
+    Command command_1phase{};  // 接收的命令
     for (;;) {
         LOG_F(INFO, "waiting for recv ...");
         int len = recv(clientSocket, buf, BUFSIZ, 0);//接收服务器端信息

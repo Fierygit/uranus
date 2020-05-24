@@ -23,7 +23,7 @@ public:
 
     ~KeepAlive() { Finished = true; }
 
-    void init(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll);
+    void init(Participants &participants, uranus::ThreadPool *poll);
 
 private:
     void keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll);

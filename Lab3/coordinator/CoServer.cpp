@@ -14,6 +14,7 @@
 #include "syncDataHandler.h"
 #include "participantHandler.h"
 #include <arpa/inet.h>
+#include <zconf.h>
 
 
 #pragma clang diagnostic push
@@ -25,7 +26,6 @@ CoServer::CoServer(std::string ip, int port) :
         ip(std::move(ip)),
         tastNodes(new BoundedBlockingQueue<TaskNode>()),
         threadPool(new uranus::ThreadPool(3)),
-        needSyncData(false),
         keepAlive(new KeepAlive(6, 12)) {}
 
 #pragma clang diagnostic pop
@@ -33,14 +33,14 @@ CoServer::CoServer(std::string ip, int port) :
 
 CoServer::~CoServer() {
     {
+        close(this->serverSockfd);
         LOG_F(INFO, "is over but just dont delete all source");
     }
 }
 
 CoServer &CoServer::init() {
 
-    loguru::shutdown();
-
+    //loguru::shutdown();  dont value?????????/what the fuck???
 
     // 同步初始化自己的服务
     initCoSrver();
@@ -52,10 +52,10 @@ CoServer &CoServer::init() {
     std::thread{[&] { syncKVDB(participants); }}.detach();
 
     // 创建子线程接受新的 client 连接
-    std::thread{[this] { clientAcceptHandler(this); }}.detach();
+    std::thread{[&] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
-    //this->keepAlive->init(participants, needSyncData, threadPool);
+    //this->keepAlive->init(participants, threadPool);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -88,6 +88,9 @@ void CoServer::run() {
         }
 
         rep2client = handler2pc(commandStr, participants, threadPool);
+
+
+        std::cout << "*********************************" << rep2client << std::endl;
 
         send2client:;
         if (send(client.fd, rep2client.c_str(), rep2client.length(), 0) < 0) {
@@ -166,6 +169,19 @@ void CoServer::initCoSrver() {
     if ((serverSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         LOG_F(ERROR, "socket error");
         exit(1);
+    }
+
+    int ret = 0;
+    int reuse = 1;
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt1");
+        _exit(-1);
+    }
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt2");
+        _exit(-1);
     }
 
     //绑定地址
