@@ -14,6 +14,7 @@
 #include "syncDataHandler.h"
 #include "participantHandler.h"
 #include <arpa/inet.h>
+#include <zconf.h>
 
 
 #pragma clang diagnostic push
@@ -32,6 +33,7 @@ CoServer::CoServer(std::string ip, int port) :
 
 CoServer::~CoServer() {
     {
+        close(this->serverSockfd);
         LOG_F(INFO, "is over but just dont delete all source");
     }
 }
@@ -164,6 +166,19 @@ void CoServer::initCoSrver() {
     if ((serverSockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         LOG_F(ERROR, "socket error");
         exit(1);
+    }
+
+    int ret = 0;
+    int reuse = 1;
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt1");
+        _exit(-1);
+    }
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt2");
+        _exit(-1);
     }
 
     //绑定地址
