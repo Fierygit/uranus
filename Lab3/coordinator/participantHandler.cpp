@@ -31,12 +31,19 @@ std::string handler2pc(std::string &commandStr, Participants &participants, uran
 
         send2PaSync(msg, participants,
                     threadPool);// 同步发送
+
         for (Participant *p : participants) {
             if (!p->isAlive) continue;
             if (p->Reply.stateCode != SUCCESS) {
                 pc2 = 1;
             }
         }
+
+        int tmpIsAlive = 0;// 一个都没活着， 直接返回错误的
+        for (Participant *&p : participants) if (p->isAlive)tmpIsAlive++;
+        if (tmpIsAlive == 0)        pc2 = 1;
+
+
     } else {
         std::string msg = Util::Encoder("SET ${key} \"${abort}\"");
         send2PaSync(msg, participants, threadPool);
