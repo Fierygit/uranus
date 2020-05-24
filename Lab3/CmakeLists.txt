@@ -214,3 +214,10 @@ target_link_libraries(
 #        pthread
 #        dl
 #)
+
+# 测试 get 的结果编码
+add_executable(testEncodeResult
+        #        common/loguru.cpp
+        test/testEncodeResult.cpp
+        common/Util.h
+        )

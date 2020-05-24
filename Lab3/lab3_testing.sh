@@ -250,7 +250,7 @@ function run_kvstore2pcsystem_c_and_other_language_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -313,7 +313,7 @@ function run_kvstore2pcsystem_java_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -374,7 +374,7 @@ function run_kvstore2pcsystem_python_robustly
 				if [[ $retval -eq 0 ]]
 				then
 					echo "Run participant[$i] successfully"
-					participants_pid[$j]=$!
+					participants_pid[$i]=$!
 					break
 				else
 					echo "Run participant[$i]. Retry times: [$j]"
@@ -782,8 +782,9 @@ function test_item7
 
 	send_set_command 9 item7_key 11 item7_value
 	send_del_command_1 9 item7_key
+	send_get_command 9 item7_key
 
-	if [[ $del_1_result = $standard_item7 ]]
+	if [[ $get_result = $standard_item7 ]]
 	then
 		echo "============================ [PASSED] : Test item 7 ============================"
 		return $PASSED
@@ -880,6 +881,12 @@ function cloud_roll_up
 	echo "---------------------------------- Global test done ----------------------------------"
 }
 
+function clean_up
+{
+	kill_coordinator_and_all_participants
+	remove_virtual_nics
+}
+
 function show_test_result
 {
 	echo "Language: [${TEST_RESULT_ARR[0]}]"
@@ -907,5 +914,6 @@ function prepare_test_env
 
 prepare_test_env
 cloud_roll_up
+clean_up
 show_test_result
 

@@ -268,12 +268,29 @@ void PaServer::handleCoor(int clientSocket) {
                             send_msg = "SET ${REP_GET} " + std::string("\"" + val + "\"");
                         }
                     } else if (command_1phase.op == DEL) {  // DEL == 2
-                        if (KVDB.count(command_1phase.key) == 0) {
-                            send_msg = "SET ${REP_DEL} \"${NULL}\"";
-                        } else {
-                            KVDB.erase(command_1phase.key);
-                            send_msg = "SET ${REP_DEL} \"${OK}\"";
+                        // TODO: 考虑 del 为空以及 del 多个key的情况. 多个 del key 用空格隔开了
+                        LOG_F(INFO, "%s", command_1phase.key.c_str());
+                        std::vector<std::string> del_keys;
+                        command_1phase.key += ' ';
+                        std::string tmp_s;
+                        for (auto ch: command_1phase.key) {
+                            if (ch == ' ') {
+                                del_keys.emplace_back(tmp_s);
+                                tmp_s = "";
+                            } else {
+                                tmp_s += ch;
+                            }
                         }
+                        int del_ok_cnt  = 0;
+                        for (auto del_key: del_keys) {
+                            if (KVDB.count(del_key)) {
+                                del_ok_cnt += 1;
+                                KVDB.erase(del_key);
+                                LOG_F(INFO, "del %s", del_key.c_str());
+                            }
+                        }
+                        send_msg = "SET DEL_CNT \"" + std::to_string(del_ok_cnt) + "\"";
+                        LOG_F(INFO, "del msg: %s", send_msg.c_str());
                     } else {  // 命令不合法
                         send_msg = "SET STATUS \"0\"";
                     }

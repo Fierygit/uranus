@@ -4,3 +4,4 @@ cmake-build-debug/
 *.o
 ThreadPoolTest
 Lab3/build
+Lab3/kvstore2pcsystem

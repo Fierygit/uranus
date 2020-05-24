@@ -1247,7 +1247,8 @@ static void print_preamble(char *out_buff, size_t out_buff_size,
 // stack_trace_skip is just if verbosity == FATAL.
 static void log_message(int stack_trace_skip, Message &message,
                         bool with_indentation, bool abort_if_fatal) {
-    const auto verbosity = message.verbosity;
+// return;
+  const auto verbosity = message.verbosity;
   std::lock_guard<std::recursive_mutex> lock(s_mutex);
 
   if (message.verbosity == Verbosity_FATAL) {
