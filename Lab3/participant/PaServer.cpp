@@ -36,6 +36,20 @@ PaServer &PaServer::init() {
         exit(1);
     }
 
+    int ret = 0;
+    int reuse = 1;
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&reuse , sizeof(int));
+
+    if (ret < 0) {
+        perror("setsockopt1");
+        exit(-1);
+    }
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT,(const void *)&reuse , sizeof(int));
+    if (ret < 0) {
+        perror("setsockopt2");
+        exit(-1);
+    }
+
     //绑定地址
     if (bind(serverSockfd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) <
         0) {

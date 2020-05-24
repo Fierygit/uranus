@@ -89,6 +89,9 @@ void CoServer::run() {
 
         rep2client = handler2pc(commandStr, participants, threadPool);
 
+
+        std::cout << "*********************************" << rep2client << std::endl;
+
         send2client:;
         if (send(client.fd, rep2client.c_str(), rep2client.length(), 0) < 0) {
             LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));

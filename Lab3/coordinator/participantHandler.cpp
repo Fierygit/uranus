@@ -32,6 +32,7 @@ std::string handler2pc(std::string &commandStr, Participants &participants, uran
         send2PaSync(msg, participants,
                     threadPool);// 同步发送
         for (Participant *p : participants) {
+            if (!p->isAlive) continue;
             if (p->Reply.stateCode != SUCCESS) {
                 pc2 = 1;
             }
@@ -58,7 +59,7 @@ std::string handler2pc(std::string &commandStr, Participants &participants, uran
             if (rep == "0") rep = "-ERROR\r\n";
             else rep = ":" + rep + "\r\n";
         } else {                                             // GET-------------(不改变就是原值)
-            if (command.op == GET && rep == "${NULL}") rep = R"(*1\r\n$3\r\nnil\r\n)";
+            if (command.op == GET && rep == "${NULL}") rep = "*1\r\n$3\r\nnil\r\n";
             else rep = Util::EncodeResult(rep);
         }
     } else rep = "-ERROR\r\n";
