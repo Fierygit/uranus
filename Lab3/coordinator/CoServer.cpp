@@ -25,7 +25,6 @@ CoServer::CoServer(std::string ip, int port) :
         ip(std::move(ip)),
         tastNodes(new BoundedBlockingQueue<TaskNode>()),
         threadPool(new uranus::ThreadPool(3)),
-        needSyncData(false),
         keepAlive(new KeepAlive(6, 12)) {}
 
 #pragma clang diagnostic pop
@@ -39,8 +38,7 @@ CoServer::~CoServer() {
 
 CoServer &CoServer::init() {
 
-    loguru::shutdown();
-
+    //loguru::shutdown();  dont value?????????/what the fuck???
 
     // 同步初始化自己的服务
     initCoSrver();
@@ -52,7 +50,7 @@ CoServer &CoServer::init() {
     std::thread{[&] { syncKVDB(participants); }}.detach();
 
     // 创建子线程接受新的 client 连接
-    std::thread{[this] { clientAcceptHandler(this); }}.detach();
+    std::thread{[&] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
     //this->keepAlive->init(participants, threadPool);

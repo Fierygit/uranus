@@ -85,7 +85,6 @@ private:
     //把并行的强行转为 串行， 最多等待 n 个任务， 当大于时， 停止服务 important
     BoundedBlockingQueue<TaskNode> *tastNodes;
 
-    std::atomic<bool> needSyncData;
 
 //  Clients clients;
 
