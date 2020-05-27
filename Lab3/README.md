@@ -8,7 +8,94 @@ A two-phase commit project implemented in C + +. A simple key value distributed 
 
 
 
-![](assets/logo.png)
+<center> <img src="assets/logo.png" alt="some_text"> </center>
+
+
+
+
+
+
+
+## Get start
+
+
+
+### Compile
+
+```
+mkdir build
+cd build
+cmake ..
+
+# both coordinator and participant
+make kvstore2pcsystem 
+
+# client to operate kv database
+make client
+```
+
+### Run
+
+```
+./kvstore2pcsystem --config_path <filename>.conf
+
+# examples
+
+# coordinator
+./kvstore2pcsystem --config_path ../src/coordinator.conf
+
+# participant
+./kvstore2pcsystem --config_path ../src/participant_2.conf
+
+# client
+./client
+```
+
+### Config files
+
+decided by the `mode` key-val
+
+> coordinator
+
+```
+!
+! Coordinator configuration
+!      2020/05/07 11:25:33
+!
+! The argument name and value are separated by whitespace in the configuration file.
+!
+! Mode of process, coordinator OR participant
+mode coordinator
+!
+! The address and port the coordinator process is listening on.
+! Note that the address and port are separated by character ':'.
+coordinator_info 127.0.0.1:8001
+!
+! Address and port information of all participants.
+! Three lines specifies three participants' addresses.
+participant_info 127.0.0.1:8002
+participant_info 127.0.0.1:8003
+participant_info 127.0.0.1:8004
+```
+
+> participant
+
+```
+!
+! Participant configuration
+!      2020/05/07 11:25:33
+!
+! The argument name and value are separated by whitespace in the configuration file.
+!
+! Mode of process, coordinator OR participant
+mode participant
+!
+! The address and port the participant process is listening on.
+participant_info 127.0.0.1:8002
+!
+! The address and port the coordinator process is listening on.
+coordinator_info 127.0.0.1:8001
+```
 
 
 
@@ -16,21 +103,25 @@ A two-phase commit project implemented in C + +. A simple key value distributed 
 
 ## Protocol
 
-
+> some message protocol
 
 ### 同步参与者
 
 > void syncKVDB();
 
-```
-同步数据库
-先调用 getLatestIndex 查看是否有数据库落下
-如果没有:
-     退出
-否则:
-     调用 getLeaderData 获得可以作为 主参与者 的数据
-     对每个 需要sync的参与者:
-         调用 syncOnePart
+```cpp
+// sync Database
+
+call getLatestIndex() -> indexes
+
+if indexes are consistent:
+	exit
+else:
+	call getLeaderData() -> leaderData
+	
+	for each indexes[i] < maxIndex:
+		call syncOnePart()
+		
 ```
 
 
@@ -90,12 +181,3 @@ P to C: SET ${KVDB_sync_one} "OK", 代表正确接收 KVDB_sync_one 的请求
     C to P: SET a "value", 将 a 设置成 "value" 值
     P to C: SET SYNC_STATUS "1", 表示同步成功
 ```
-
-
-
-
-
-
-## test.sh bug
-
-每次执行完进程还在后台运行, 没有被杀死, 导致要手动关掉后台进程. 否则会出现端口占用问题.

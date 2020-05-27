@@ -14,7 +14,7 @@
 #include "syncDataHandler.h"
 #include "participantHandler.h"
 #include <arpa/inet.h>
-#include <zconf.h>
+#include <unistd.h>
 
 
 #pragma clang diagnostic push
