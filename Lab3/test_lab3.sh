@@ -637,7 +637,7 @@ function set_tag
 	echo "                                       \|/                                   "
 }
 
-printf -v standard_error "-ERROR\r"
+printf -v standard_error ".ERROR\r"
 printf -v standard_ok "+OK\r"
 printf -v standard_nil "*1\r\n\$3\r\nnil\r"
 
