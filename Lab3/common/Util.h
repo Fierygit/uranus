@@ -13,9 +13,7 @@
 
 class Util {
 public:
-    /*
-     * 字符串到 Command，解析不到返回空的
-     */
+
     // -1 error
     // 0  没有事件
     // > 0  fd
