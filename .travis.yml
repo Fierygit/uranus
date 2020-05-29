@@ -7,4 +7,4 @@ os: linux
 
 script:
   - bash ./travis.sh
-  - bash ./Lab3/test_lab3.sh ./build
+  - bash ./Lab3/test_lab3.sh ./Lab3/build
