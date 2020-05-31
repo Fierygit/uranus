@@ -41,10 +41,12 @@ void syncKVDB(Participants & participants) {
         std::thread handleSync([p, &waitSyncGroup, &idx, &result] {
             getLatestIndex(p, idx, result);
             waitSyncGroup.Done();
+            LOG_F(INFO, "%s:%d: getIndex over", p->ip.c_str(), p->port);
         });
         handleSync.detach();
     }
     waitSyncGroup.Wait();
+    LOG_F(INFO, "sync: all getIndex over");
 
     // 打印 LOG信息, 获取最大索引
     int maxLogIndex = 0, maxIndex = -1;

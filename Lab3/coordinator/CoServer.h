@@ -20,7 +20,6 @@
 /*
  * 连接的用户
  */
-
 struct Client {
     int fd; // socket 的文件描述符
     sockaddr_in addr;

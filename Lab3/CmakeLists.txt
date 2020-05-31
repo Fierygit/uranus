@@ -77,17 +77,17 @@ target_link_libraries(
 #
 #
 ## 客户端####################################
-#set(CLIENT "client")
-#add_executable(${CLIENT}
-#        common/loguru.cpp
-#        client/main.cpp client/Client.h client/Client.cpp common/WaitGroup.h)
-#
-## 添加 thread   dynamic link?
-#target_link_libraries(
-#        client
-#        pthread
-#        dl
-#)
+set(CLIENT "client")
+add_executable(${CLIENT}
+        common/loguru.cpp
+        client/main.cpp client/Client.h client/Client.cpp common/WaitGroup.h)
+
+# 添加 thread   dynamic link?
+target_link_libraries(
+        client
+        pthread
+        dl
+)
 #
 ## 参与者
 #set(PARTICIPANT "participant")

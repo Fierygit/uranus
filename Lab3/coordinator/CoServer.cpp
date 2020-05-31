@@ -55,7 +55,7 @@ CoServer &CoServer::init() {
     std::thread{[&] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
-    //this->keepAlive->init(participants, threadPool);
+    this->keepAlive->init(participants, threadPool);
 
     LOG_F(INFO, "init over");
     return *this;

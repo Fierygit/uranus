@@ -19,11 +19,13 @@ void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
-
             std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
             std::atomic<bool> needSyncData{false};
             keepaliveCheck(participants, needSyncData, poll);
-            if(needSyncData) syncKVDB(participants);
+            if(needSyncData) {
+                LOG_F(INFO, "keepAlive: need to sync db");
+                syncKVDB(participants);
+            }
             //todo 确保了同步时不会有新的上线， 会不会有冲突呢？ 有！！！
             // 同步过程中， client 各个pa返回的值可能不一样！！！
         }
@@ -42,7 +44,8 @@ void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
 
 void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *pool) {
     WaitGroup waitGroup;
-    waitGroup.Add("keepAlive", participants.size());
+    LOG_F(INFO, "alive cnt: %d", getAliveCnt(participants));
+    waitGroup.Add("keepAlive", getAliveCnt(participants));
     //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
         pool->addTask([p, &needSyncData, &pool, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
