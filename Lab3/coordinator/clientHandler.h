@@ -16,6 +16,6 @@ struct SubClientContex {
 
 void clientAcceptHandler(CoServer *);
 
-void clientReadHandler(const SubClientContex&);
+void clientReadHandler(SubClientContex);
 
 #endif //LAB3_CLIENTHANDLER_H

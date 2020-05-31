@@ -19,13 +19,10 @@ void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
     std::thread tmp{[&] {
         while (!Finished) {
-
             std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
             std::atomic<bool> needSyncData{false};
             keepaliveCheck(participants, needSyncData, poll);
-            if(needSyncData) syncKVDB(participants);
-            //todo 确保了同步时不会有新的上线， 会不会有冲突呢？ 有！！！
-            // 同步过程中， client 各个pa返回的值可能不一样！！！
+            if (needSyncData) syncKVDB(participants);
         }
     }};
     tmp.detach();
@@ -43,15 +40,15 @@ void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
 void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *pool) {
     WaitGroup waitGroup;
     waitGroup.Add("keepAlive", participants.size());
-    //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
-        pool->addTask([p, &needSyncData, &pool, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
+
+       std::thread([p, &needSyncData, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
+
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII
-                //std::cout << "what the fuck\n";
                 std::unique_lock<std::mutex> tmpLock(p->lock); //warning
-                //std::cout << "what the fuck\n";
+                std::cout << "what the fuck3 " << p->port << std::endl;
                 if (!p->isAlive) {// 挂了的尝试去连接一下
                     if (connectLostPa(p)) needSyncData = true;
                     goto end;  // 结束喽！！！！！！！！！！！！！！！！！！！！！！
@@ -67,7 +64,7 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
                 end:;//放锁
                 waitGroup.Done();// 这个一定一定一定一定一定要注意 调用
             }
-        });
+        }).detach();
     }
     waitGroup.Wait();
 }
