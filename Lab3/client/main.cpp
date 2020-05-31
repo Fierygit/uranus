@@ -3,6 +3,6 @@
 
 
 int main() {
-    Client().init()->run();
+    Client0().init()->run();
     return 0;
 }

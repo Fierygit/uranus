@@ -7,12 +7,11 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include "Client.h"
-#include "../common/public.h"
 #include "../common/loguru.hpp"
 #include "../common/Util.h"
 
 
-Client *Client::init() {
+Client0 *Client0::init() {
     //欢迎logo
     //todo
     //std::cout << welcomeLogo << std::endl;
@@ -39,7 +38,7 @@ Client *Client::init() {
     return this;
 }
 
-void Client::run() {
+void Client0::run() {
 
 //    // 测试， 收服务端的消息
 //    char buf[BUFSIZ];  //数据传送的缓冲区
@@ -62,7 +61,7 @@ void Client::run() {
 }
 
 // 不处理出错问题
-void Client::sendToServer(std::string msg) {
+void Client0::sendToServer(std::string msg) {
 
     // 所有的 send 都要 try catch
     int len = send(clientSockfd, msg.c_str(), msg.size(), 0);

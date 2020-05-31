@@ -73,7 +73,7 @@ void clientReadHandler(SubClientContex ctx) {
             //Command command = Util::Decoder(clientBuf);
             //LOG_F(INFO, "OP: %d\tkey: %s\tvalue: %s", command.op, command.key.c_str(), command.value.c_str());
             //放入队列,  让 2pc 线程处理
-            ctx.coServer->getTastNodes()->put(CoServer::TaskNode(ctx.client, clientBuf));
+            ctx.coServer->getTastNodes()->put(TaskNode(ctx.client, clientBuf));
         } else {
             LOG_F(INFO, "这是半包\n");
             continue; // 半包不删除 clientbuf

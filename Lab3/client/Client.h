@@ -7,12 +7,12 @@
 
 #include <netinet/in.h>
 
-class Client {
+class Client0 {
 
 public:
-    Client() {}
+    Client0() {}
 
-    Client* init();
+    Client0* init();
 
     void run();
 private:

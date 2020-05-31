@@ -179,6 +179,8 @@ void PaServer::handleCoor(int clientSocket) {
                     }
                 }
             }
+
+            continue;
         }
             // 作为被同步的对象, 指明了循环的次数
         else if (command.op == SET && command.key == "${KVDB_sync_one}") {
@@ -252,6 +254,7 @@ void PaServer::handleCoor(int clientSocket) {
                 this->latestIndex = latestIndex;
                 LOG_F(INFO, "set this->latestIndex = %d", this->latestIndex);
             }
+            continue;
         }
             // 其他的 正常的命令
         else {

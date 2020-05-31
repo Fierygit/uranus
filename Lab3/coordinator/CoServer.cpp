@@ -50,13 +50,13 @@ CoServer &CoServer::init() {
     // 同步连接所有的 participant,
     initPaSrver();
 
-    this->threadPool->addTask([&] { syncKVDB(participants); });
+    syncKVDB(participants);//不需要同步
 
     // 创建子线程接受新的 client 连接
     std::thread{[&] { clientAcceptHandler(this); }}.detach();
 
     // 初始化心跳包
-    this->keepAlive->init(participants, threadPool);
+    //this->keepAlive->init(participants, threadPool, tastNodes);
 
     LOG_F(INFO, "init over");
     return *this;
@@ -81,6 +81,14 @@ void CoServer::run() {
 
         std::string rep2client;
 
+        std::cout << "/**************************" <<  Util::outputProtocol(commandStr) << std::endl;
+
+        if (command.op == SET && command.key == "${SYNC}") {
+            syncKVDB(participants);
+            continue;
+        }
+        std::cout << "/************************** fuck "  << std::endl;
+
         int tmpIsAlive = 0;// 一个都没活着， 直接返回错误的
         for (Participant *p : participants) if (p->isAlive)tmpIsAlive++;
         if (tmpIsAlive == 0) {
@@ -91,7 +99,7 @@ void CoServer::run() {
         rep2client = handler2pc(commandStr, participants, threadPool);
 
 
-        std::cout << "*********************************" << rep2client  << " ** " << threadPool->size() << std::endl;
+        std::cout << "*********************************" << rep2client << " ** " << threadPool->size() << std::endl;
 
 
         send2client:;
@@ -211,7 +219,7 @@ int CoServer::getServerSockfd() const {
     return serverSockfd;
 }
 
-BoundedBlockingQueue<CoServer::TaskNode> *CoServer::getTastNodes() const {
+BoundedBlockingQueue<TaskNode> *CoServer::getTastNodes() const {
     return this->tastNodes;
 }
 

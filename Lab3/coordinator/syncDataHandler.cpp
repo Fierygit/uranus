@@ -4,11 +4,12 @@
 
 #include <sys/socket.h>
 #include <thread>
+#include <iostream>
 #include "syncDataHandler.h"
 #include "../common/Util.h"
 
 // 获取参与者中或者的数量
-int getAliveCnt(Participants& participants) {
+int getAliveCnt(Participants &participants) {
     int wait_cnt = 0;
     for (const auto &p: participants) {
         if (p->isAlive) {
@@ -27,25 +28,25 @@ int getAliveCnt(Participants& participants) {
  *      对每个 需要sync的参与者:
  *          调用 syncOnePart
  */
-void syncKVDB(Participants & participants) {
-    WaitGroup waitSyncGroup;
+void syncKVDB(Participants &participants) {
+    //WaitGroup waitSyncGroup;
     LOG_F(INFO, "this->getAliveCnt(): %d", getAliveCnt(participants));
     //todo 中途有新的 p 加入进来怎么办？？？？？？？？？？？？？？？？
-    waitSyncGroup.Add(getAliveCnt(participants));
+    //waitSyncGroup.Add(getAliveCnt(participants));
     std::vector<int> result(participants.size());
     int idx = -1;
     for (Participant *p: participants) {
         idx++;
         if (!p->isAlive) continue;
         // 注意用法
-        std::thread handleSync([p, &waitSyncGroup, &idx, &result] {
-            getLatestIndex(p, idx, result);
-            waitSyncGroup.Done();
-            LOG_F(INFO, "%s:%d: getIndex over", p->ip.c_str(), p->port);
-        });
-        handleSync.detach();
+        //std::thread handleSync([p, &waitSyncGroup, &idx, &result] {
+        getLatestIndex(p, idx, result);
+        // waitSyncGroup.Done();
+        LOG_F(INFO, "%s:%d: getIndex over", p->ip.c_str(), p->port);
+        //});
+        //handleSync.detach();
     }
-    waitSyncGroup.Wait();
+    //waitSyncGroup.Wait();
     LOG_F(INFO, "sync: all getIndex over");
 
     // 打印 LOG信息, 获取最大索引
@@ -65,7 +66,7 @@ void syncKVDB(Participants & participants) {
         LOG_F(INFO, "maxLogIndex: %d, max part: (%s:%d)", maxLogIndex, mainPart->ip.c_str(), mainPart->port);
         // 开始查找需要进行同步的参与者
         std::vector<Participant *> toSyncParts;
-        for (auto & participant : participants) {
+        for (auto &participant : participants) {
             if (!participant->isAlive) continue;
             if (maxLogIndex > participant->lastIndex) {
                 toSyncParts.emplace_back(participant);
@@ -85,18 +86,18 @@ void syncKVDB(Participants & participants) {
 
             // 然后使用多线程将它同步给每个缺失信息的数据库
             for (auto &p: toSyncParts) {
-                std::thread handleOneSync([p, leaderData, maxLogIndex] {
-                    LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
-                    syncOnePart(p, leaderData, maxLogIndex);
-                });
-                handleOneSync.detach();
+                // std::thread handleOneSync([p, leaderData, maxLogIndex] {
+                LOG_F(INFO, "start: sync for (%s:%d)", p->ip.c_str(), p->port);
+                syncOnePart(p, leaderData, maxLogIndex);
+                // });
+                //handleOneSync.detach();
+                LOG_F(INFO, "end: sync for (%s:%d)", p->ip.c_str(), p->port);
             }
         }
     } else {
         LOG_F(INFO, "nothing to sync ...");
     }
 }
-
 
 
 /* 获取一个 p 最新的 操作(日志)索引
@@ -201,7 +202,6 @@ std::vector<std::string> getLeaderData(Participant *p) {
 }
 
 
-
 /* 同步协议: 同步单个参与者, 使用leaderData
  * CoServer to PaServer: SET ${KVDB_sync_one} "maxIndex_syncSize"
  * PaServer to CoServer: SET ${KVDB_sync_one} "OK"
@@ -216,7 +216,7 @@ std::vector<std::string> getLeaderData(Participant *p) {
  *      C to P: SET a "value", 将 a 设置成 "value" 值
  *      SET SYNC_STATUS "1", 表示同步成功
  */
-void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int maxIndex) {
+void syncOnePart(Participant *p, const std::vector<std::string> &leaderData, int maxIndex) {
     std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
     std::vector<std::string> newLeaderData = leaderData;
     LOG_F(INFO, "(%s:%d) doing syncOnePart ...", p->ip.c_str(), p->port);
@@ -224,8 +224,8 @@ void syncOnePart(Participant *p, const std::vector<std::string>& leaderData, int
     // 加入了索引信息
     std::string tmpMsg = Util::Encoder(
             "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"");
-//    std::cout << "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"" << std::endl;
-//    LOG_F(INFO, "syncOnePart: to send: %s", msg.c_str());
+    //std::cout << "SET ${KVDB_sync_one} \"" + std::to_string(maxIndex) + "_" + std::to_string(newLeaderData.size()) + "\"" << std::endl;
+    //LOG_F(INFO, "syncOnePart: to send: %s", tmpMsg.c_str());
     newLeaderData.insert(newLeaderData.begin(), tmpMsg);
     char buf[BUFSIZ];  //数据传送的缓冲区
 

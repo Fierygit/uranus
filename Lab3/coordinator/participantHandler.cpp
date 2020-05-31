@@ -132,11 +132,9 @@ void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool
                             p->isAlive = false;
                             goto end;
                         }
-                        //std::cout << buf << std::endl;
                         LOG_F(INFO, "receive: len: %d  %s", len, Util::outputProtocol(buf).c_str());
                         Command command = Util::Decoder(buf);
-                        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port,
-                              command.op, command.key.c_str(), command.value.c_str());
+                        LOG_F(INFO, "receive %d OP: %d\tkey: %s\tvalue: %s", p->port, command.op, command.key.c_str(), command.value.c_str());
                         p->Reply.info = command.value;
                     }
                 }

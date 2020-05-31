@@ -17,14 +17,7 @@
 #include "../common/ThreadPool.h"
 #include "../common/WaitGroup.h"
 
-/*
- * 连接的用户
- */
-struct Client {
-    int fd; // socket 的文件描述符
-    sockaddr_in addr;
-    std::string buf;
-};
+
 
 
 class CoServer {
@@ -67,9 +60,7 @@ private:
     // 里面存的东西可以变吗？？？？
 
     // 系统信息
-public:
-    using Clients = std::vector<Client>;
-    using TaskNode = std::pair<Client, std::string>;
+
 
 public:
 

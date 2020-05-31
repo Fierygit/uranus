@@ -9,6 +9,7 @@
 #include <vector>
 #include "../common/public.h"
 #include "../common/ThreadPool.h"
+#include "BoundedBlockingQueue.h"
 
 
 class KeepAlive {
@@ -23,7 +24,7 @@ public:
 
     ~KeepAlive() { Finished = true; }
 
-    void init(Participants &participants, uranus::ThreadPool *poll);
+    void init(Participants &participants, uranus::ThreadPool *poll,BoundedBlockingQueue<TaskNode> *);
 
 private:
     void keepaliveCheck(Participants &participants, std::atomic<bool> &needSyncData, uranus::ThreadPool *poll);

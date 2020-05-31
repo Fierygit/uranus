@@ -15,16 +15,20 @@
 
 //使用引用， 并发的时候遍历会不会出问题？//
 // 不会， 因为大小不会变化， 里面使用分段锁
-void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll) {
+void KeepAlive::init(Participants &participants, uranus::ThreadPool *poll, BoundedBlockingQueue<TaskNode> *queue) {
     for (Participant *p : participants) if (p->isAlive) p->lastAlive = std::chrono::system_clock::now();
-    std::thread tmp{[&] {
+    std::thread tmp{[&]() {
         while (!Finished) {
             std::this_thread::sleep_for(std::chrono::seconds(this->checkInterval));
             std::atomic<bool> needSyncData{false};
             keepaliveCheck(participants, needSyncData, poll);
-            if(needSyncData) {
-                LOG_F(INFO, "keepAlive: need to sync db");
-                syncKVDB(participants);
+//            if (needSyncData) {
+//                LOG_F(INFO, "keepAlive: need to sync db");
+//               syncKVDB(participants);
+//            }
+            if (needSyncData) {
+                std::string syncNode{"SET ${SYNC} \"TRUE\""};
+                queue->put(TaskNode(Client{}, Util::Encoder(syncNode)));
             }
             //todo 确保了同步时不会有新的上线， 会不会有冲突呢？ 有！！！
             // 同步过程中， client 各个pa返回的值可能不一样！！！
@@ -49,13 +53,13 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
     //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
 
-       std::thread([p, &needSyncData, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
+        std::thread([p, &needSyncData, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
 
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII
                 std::unique_lock<std::mutex> tmpLock(p->lock); //warning
-                std::cout << "what the fuck3 " << p->port << std::endl;
+                // std::cout << "what the fuck3 " << p->port << std::endl;
                 if (!p->isAlive) {// 挂了的尝试去连接一下
                     if (connectLostPa(p)) needSyncData = true;
                     goto end;  // 结束喽！！！！！！！！！！！！！！！！！！！！！！

@@ -8,8 +8,23 @@
 #include <chrono>
 #include <vector>
 #include <mutex>
+#include <arpa/inet.h>
 
 #define ERROR_REP "-ERROR\\r\\n"
+
+
+/*
+ * 连接的用户
+ */
+struct Client {
+    int fd; // socket 的文件描述符
+    sockaddr_in addr;
+    std::string buf;
+};
+
+
+using Clients = std::vector<Client>;
+using TaskNode = std::pair<Client, std::string>;
 
 enum OP {
     GET, SET, DEL
