@@ -38,6 +38,8 @@ CoServer::~CoServer() {
     }
 }
 
+// 同步KV数据库
+
 CoServer &CoServer::init() {
 
     //loguru::shutdown();  dont value?????????/what the fuck???
@@ -48,8 +50,7 @@ CoServer &CoServer::init() {
     // 同步连接所有的 participant,
     initPaSrver();
 
-    // 同步KV数据库
-    std::thread{[&] { syncKVDB(participants); }}.detach();
+    this->threadPool->addTask([&] { syncKVDB(participants); });
 
     // 创建子线程接受新的 client 连接
     std::thread{[&] { clientAcceptHandler(this); }}.detach();
@@ -81,7 +82,7 @@ void CoServer::run() {
         std::string rep2client;
 
         int tmpIsAlive = 0;// 一个都没活着， 直接返回错误的
-        for (Participant *&p : participants) if (p->isAlive)tmpIsAlive++;
+        for (Participant *p : participants) if (p->isAlive)tmpIsAlive++;
         if (tmpIsAlive == 0) {
             rep2client = ERROR_REP;
             goto send2client;
@@ -90,13 +91,15 @@ void CoServer::run() {
         rep2client = handler2pc(commandStr, participants, threadPool);
 
 
-        std::cout << "*********************************" << rep2client << std::endl;
+        std::cout << "*********************************" << rep2client  << " ** " << threadPool->size() << std::endl;
+
 
         send2client:;
         if (send(client.fd, rep2client.c_str(), rep2client.length(), 0) < 0) {
             LOG_F(ERROR, "client is bad : %s", inet_ntoa(clientAddr.sin_addr));
             continue;
         }
+
     }
 }
 
@@ -120,7 +123,7 @@ void CoServer::initPaSrver() {
 
     for (Participant *&p : this->participants) {
         // 放进线程池处理
-        threadPool->addTask([this, &p, &waitGroup] { // 不要用引用， clientSocket 是局部变量
+        threadPool->addTask([this, p, &waitGroup] { // 不要用引用， clientSocket 是局部变量
             struct sockaddr_in remoteAddr{}; //服务器端网络地址结构体
             int clientSockfd;
 
@@ -173,12 +176,12 @@ void CoServer::initCoSrver() {
 
     int ret = 0;
     int reuse = 1;
-    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR,(const void *)&reuse , sizeof(int));
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEADDR, (const void *) &reuse, sizeof(int));
     if (ret < 0) {
         perror("setsockopt1");
         _exit(-1);
     }
-    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT,(const void *)&reuse , sizeof(int));
+    ret = setsockopt(serverSockfd, SOL_SOCKET, SO_REUSEPORT, (const void *) &reuse, sizeof(int));
     if (ret < 0) {
         perror("setsockopt2");
         _exit(-1);

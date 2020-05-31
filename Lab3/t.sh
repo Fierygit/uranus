@@ -857,7 +857,6 @@ function test_item9
 
 
 
-################################# devil version
 
 # i just write c and exe, pass arg 
 function run_one_participant_c_and_other_language_robustly
@@ -930,6 +929,7 @@ function kill_participant_by_pid
     kill -9 ${tmp_pid}
 }
 
+################################# devil version
 printf -v standard_item10 "*1\r\n\$17\r\nitem10_key_value\r\n"
 function test_item10
 {

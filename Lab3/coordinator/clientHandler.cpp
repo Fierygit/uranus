@@ -50,7 +50,7 @@ void clientAcceptHandler(CoServer *coServer) {
  */
 
 //??? 引用上面是一个临时变量， 会不会已经消失了？？？
-void clientReadHandler(const SubClientContex &ctx) {
+void clientReadHandler(SubClientContex ctx) {
     int clientSocket = ctx.client.fd;
     sockaddr_in clientAddr = ctx.client.addr;
 //    std::string clientBuf, welcomeInfo{"welcome to uranus server"};

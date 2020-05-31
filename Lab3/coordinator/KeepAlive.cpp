@@ -48,13 +48,14 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
     waitGroup.Add("keepAlive", getAliveCnt(participants));
     //std::cout << "what the fuck\n" << participants.size() << std::endl;
     for (Participant *p : participants) {
-        pool->addTask([p, &needSyncData, &pool, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
+
+       std::thread([p, &needSyncData, this, &waitGroup] { // p不能是 引用!!!!!!!!!!!!!!!!检查所有的使用
             Time now = std::chrono::system_clock::now();
+
             Munites diff = std::chrono::duration_cast<Munites>(now - p->lastAlive);
             {       //RAII
-                //std::cout << "what the fuck\n";
                 std::unique_lock<std::mutex> tmpLock(p->lock); //warning
-                //std::cout << "what the fuck\n";
+                std::cout << "what the fuck3 " << p->port << std::endl;
                 if (!p->isAlive) {// 挂了的尝试去连接一下
                     if (connectLostPa(p)) needSyncData = true;
                     goto end;  // 结束喽！！！！！！！！！！！！！！！！！！！！！！
@@ -70,7 +71,7 @@ void KeepAlive::keepaliveCheck(Participants &participants, std::atomic<bool> &ne
                 end:;//放锁
                 waitGroup.Done();// 这个一定一定一定一定一定要注意 调用
             }
-        });
+        }).detach();
     }
     waitGroup.Wait();
 }

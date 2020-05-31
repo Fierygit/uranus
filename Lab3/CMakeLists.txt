@@ -29,31 +29,83 @@ target_link_libraries(
 )
 
 #############################for test
-#add_executable(kvstore2pcsystemTEST2
-#        main.cpp
-#        coordinator/KeepAlive.cpp
-#        coordinator/KeepAlive.h
-#        common/loguru.cpp
-#        coordinator/CoServer.h
-#        coordinator/CoServer.cpp
-#        coordinator/clientHandler.cpp
-#        coordinator/clientHandler.h
-#        coordinator/participantHandler.h
-#        coordinator/participantHandler.cpp
-#        participant/PaServer.h
-#        participant/PaServer.cpp
-#        common/Util.h
-#        common/Config.h
-#        common/ThreadPool.h
-#        common/ThreadPool.cpp
-#        coordinator/syncDataHandler.cpp
-#        )
-#
-#target_link_libraries(
-#        kvstore2pcsystemTEST2
-#        pthread
-#        dl
-#)
+add_executable(kvstore2pcsystemTEST2
+        main.cpp
+        coordinator/KeepAlive.cpp
+        coordinator/KeepAlive.h
+        common/loguru.cpp
+        coordinator/CoServer.h
+        coordinator/CoServer.cpp
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h
+        coordinator/participantHandler.h
+        coordinator/participantHandler.cpp
+        participant/PaServer.h
+        participant/PaServer.cpp
+        common/Util.h
+        common/Config.h
+        common/ThreadPool.h
+        common/ThreadPool.cpp
+        coordinator/syncDataHandler.cpp
+        )
+
+target_link_libraries(
+        kvstore2pcsystemTEST2
+        pthread
+        dl
+)
+#############################for test
+add_executable(kvstore2pcsystemTEST4
+        main.cpp
+        coordinator/KeepAlive.cpp
+        coordinator/KeepAlive.h
+        common/loguru.cpp
+        coordinator/CoServer.h
+        coordinator/CoServer.cpp
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h
+        coordinator/participantHandler.h
+        coordinator/participantHandler.cpp
+        participant/PaServer.h
+        participant/PaServer.cpp
+        common/Util.h
+        common/Config.h
+        common/ThreadPool.h
+        common/ThreadPool.cpp
+        coordinator/syncDataHandler.cpp
+        )
+
+target_link_libraries(
+        kvstore2pcsystemTEST4
+        pthread
+        dl
+)
+#############################for test
+add_executable(kvstore2pcsystemTEST3
+        main.cpp
+        coordinator/KeepAlive.cpp
+        coordinator/KeepAlive.h
+        common/loguru.cpp
+        coordinator/CoServer.h
+        coordinator/CoServer.cpp
+        coordinator/clientHandler.cpp
+        coordinator/clientHandler.h
+        coordinator/participantHandler.h
+        coordinator/participantHandler.cpp
+        participant/PaServer.h
+        participant/PaServer.cpp
+        common/Util.h
+        common/Config.h
+        common/ThreadPool.h
+        common/ThreadPool.cpp
+        coordinator/syncDataHandler.cpp
+        )
+
+target_link_libraries(
+        kvstore2pcsystemTEST3
+        pthread
+        dl
+)
 #
 #
 ## 协调者##########################333

@@ -1,7 +1,7 @@
 ## 2PC-Uranus
 
 
-
+![](https://api.travis-ci.org/Fierygit/uranus.svg?branch=master)
 ![](assets/cpp.svg) ![](assets/support.svg)
 
 A two-phase commit project implemented in C + +. A simple key value distributed database is implemented

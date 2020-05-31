@@ -1,0 +1,10 @@
+language: cpp
+dist: bionic
+sudo: required
+compiler: gcc
+
+os: linux
+
+script:
+  - bash ./travis.sh
+  - bash ./Lab3/test_lab3.sh ./Lab3/build

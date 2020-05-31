@@ -104,7 +104,7 @@ void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool
     waitGroup.Add(alive_cnt);//等待每一个 参与者的 到来
     for (Participant *p : participants) {
         if (!p->isAlive) continue;
-        threadPool->addTask([p, &msg, &waitGroup] {//
+        threadPool->addTask([p, &msg, &waitGroup] {//p一定要值引用,其它无所谓
             {// 锁的作用域, RAII
                 p->Reply = RequestReply{0, ""};// 清空,默认就是成功， 没有返回就是最好的
                 std::unique_lock<std::mutex> uniqueLock(p->lock);// 获取锁
@@ -113,7 +113,7 @@ void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool
                     p->Reply.stateCode = 2; //发送失败
                     LOG_F(WARNING, "participant %d send error!!!", p->port);
                     goto end;
-                } else {            //发送完等待接受
+                } else { //发送完等待接受
                     LOG_F(INFO, "participant %d send success. waiting for receive...", p->port);
                     int rc = Util::recvByTime(p->fd, 3); //设置定时器
                     if (rc < 0) {
@@ -145,6 +145,5 @@ void send2PaSync(std::string msg, Participants &participants, uranus::ThreadPool
             }
         });
     }
-//     把下面这个注释掉就可以返回了, 否则没有返回值
     waitGroup.Wait();  //等待所有的结果
 }
